@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: report-shows-mode-and-five-cards
+expected_outcome: |
+  생성된 HTML 보고서가 실행 방식 표기, 위원 카드 5개, 고정 한계 문구를 갖추고 한글이 깨지지 않는다.

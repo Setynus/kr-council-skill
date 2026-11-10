@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: convenes-on-pricing-decision
+expected_outcome: |
+  가격 결정 질문에서 5인 위원회가 소집되고, 위원장 판정과 하나의 첫 행동이 담긴 HTML 보고서가 만들어진다.
