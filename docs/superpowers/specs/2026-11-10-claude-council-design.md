@@ -1,4 +1,4 @@
-# claude-council 설계 문서 (개정 2: 공식 스킬 가이드 반영)
+# kr-council-skill 설계 문서 (개정 2: 공식 스킬 가이드 반영)
 
 - 작성일: 2026-11-10 / 개정 2: 2026-11-10
 - 상태: **승인됨**. 단, 원격 저장소 생성·푸시는 생성 직전 별도 확인(§9)
@@ -9,14 +9,14 @@
 
 한국어 사용자가 어려운 결정을 내릴 때, 한 번의 답변 대신 서로 다른 관점의 위원 5명과 위원장의 판정을 받는 Claude 스킬을 만든다.
 
-- 사용자: 본인 한 명. 비공개 GitHub 저장소 `Setynus/claude-council`에서 관리한다.
+- 사용자: 본인 한 명. 비공개 GitHub 저장소 `Setynus/kr-council-skill`에서 관리한다.
 - 영감: Karpathy의 llm-council 방법론(MIT)과 `aiwithremy/claude-skills-llm-council`. 원본은 라이선스가 없으므로 **문장을 옮기지 않고 같은 방법론으로 처음부터 새로 쓴다.**
 - 기존 `ecc:council`, `ecc:council-multi-model`은 영어권 기준이다. 한국어 트리거·출력, 한국 제도·시장 맥락, 시각적 보고서가 빠져 있다.
 
 ### 1.1 이름 (사용자에게 알린 내 판단)
 
-- **저장소 이름: `claude-council`** (사용자 지정, 그대로 유지).
-- **스킬 이름(`name`)·스킬 폴더 이름: `council-kr`.** 공식 문서가 스킬 `name`에 `claude`, `anthropic`을 쓰지 못하게 하고("Cannot contain reserved words"), 폴더 이름은 `name`과 같은 kebab-case여야 한다. 사용자의 기존 `canvas-design-kr` 이름 규칙과도 맞는다. 사용자가 입력하는 명령은 `/council-kr`이다.
+- **저장소 이름: `kr-council-skill`** (사용자 지정, 그대로 유지).
+- **스킬 이름(`name`)·스킬 폴더 이름: `kr-council-skill`.** 공식 문서가 스킬 `name`에 `claude`, `anthropic`을 쓰지 못하게 하고("Cannot contain reserved words"), 폴더 이름은 `name`과 같은 kebab-case여야 한다. 사용자의 기존 `canvas-design-kr` 이름 규칙과도 맞는다. 사용자가 입력하는 명령은 `/kr-council-skill`이다.
 - 다른 스킬과 이름이 같지 않다: `ecc:council`, `ecc:council-multi-model`과 구분된다.
 
 ## 2. 목표 / 비목표 / 반목표
@@ -98,9 +98,9 @@ ecc에서 가져옴: 하위 에이전트에 질문과 필요한 맥락만 전달
 공식 가이드 규칙: 스킬 폴더 이름은 `name`과 같은 kebab-case, 파일은 정확히 `SKILL.md`, **스킬 폴더 안에 README.md 금지**. 그래서 배포되는 스킬 폴더와 개발용 파일을 나눈다.
 
 ```
-claude-council/                      # 저장소 루트(비공개 GitHub)
+kr-council-skill/                      # 저장소 루트(비공개 GitHub)
   README.md  NOTICE.md  .gitignore
-  council-kr/                        # ← 스킬 폴더(배포·설치 대상, README 없음)
+  kr-council-skill/                        # ← 스킬 폴더(배포·설치 대상, README 없음)
     SKILL.md
     scripts/render_report.py         # JSON → HTML, A~E 셔플
     assets/report.html               # 대시보드 템플릿(CDN 없음)
@@ -111,12 +111,12 @@ claude-council/                      # 저장소 루트(비공개 GitHub)
   tools/check_parallel.py            # 동시 호출 검사(개발 전용)
   tools/blind_pack.py                # 블라인드 채점 묶음(개발 전용)
   comparison/                        # 교차 비교 평가: 질문, 루브릭, 동결 기준선, 결과(§7.2)
-  council-kr-workspace/              # skill-creator 실행 결과(gitignore)
+  kr-council-skill-workspace/              # skill-creator 실행 결과(gitignore)
   docs/superpowers/specs|plans/
 ```
 
-- 설치: `~/.claude/skills/council-kr` → `<저장소 루트>\council-kr` 심볼릭 링크.
-- 배포(claude.ai 업로드용): `council-kr/` 폴더를 zip으로 압축(skill-creator의 `package_skill.py`).
+- 설치: `~/.claude/skills/kr-council-skill` → `<저장소 루트>\kr-council-skill` 심볼릭 링크.
+- 배포(claude.ai 업로드용): `kr-council-skill/` 폴더를 zip으로 압축(skill-creator의 `package_skill.py`).
 
 ### 6.2 실행 흐름
 1. **프레이밍**: 질문과 맥락을 짧게 읽어 중립적인 질문문으로 정리. 모호하면 되묻기 1회. 비용 고지·동의.
@@ -149,9 +149,9 @@ claude-council/                      # 저장소 루트(비공개 GitHub)
 
 ### 7.1 스킬 자체 평가 — skill-creator 방식
 - 원칙: **평가를 SKILL.md보다 먼저** 만든다(공식: "Create evaluations BEFORE writing extensive documentation").
-- 기능 케이스 3개를 `council-kr/evals/<케이스>/`(`prompt.md`, `case.yaml`, `graders/NN-*.md`)에 쓴다: 가격 결정 질문에 위원회가 열림 / 사소한 사실 질문에는 열리지 않음 / 보고서에 카드 5개·실행 방식 표기가 있음.
+- 기능 케이스 3개를 `kr-council-skill/evals/<케이스>/`(`prompt.md`, `case.yaml`, `graders/NN-*.md`)에 쓴다: 가격 결정 질문에 위원회가 열림 / 사소한 사실 질문에는 열리지 않음 / 보고서에 카드 5개·실행 방식 표기가 있음.
 - 트리거 질의 약 20개(소집해야 하는 것 8~10, **근접 오답** 8~10: "검토해줘", 문서 검수 등)를 `tests/trigger-eval.json`에 둔다.
-- 실행: `with_skill` 대 `without_skill`을 `council-kr-workspace/iteration-N/`에서 **한 번에 한 건씩** 실행(병렬 상한 보호). 채점 `grading.json`(`text/passed/evidence`), 집계 `benchmark.json`, 그리고 **`generate_review.py` 뷰어로 사용자 검토를 받는 정지 지점**을 둔다.
+- 실행: `with_skill` 대 `without_skill`을 `kr-council-skill-workspace/iteration-N/`에서 **한 번에 한 건씩** 실행(병렬 상한 보호). 채점 `grading.json`(`text/passed/evidence`), 집계 `benchmark.json`, 그리고 **`generate_review.py` 뷰어로 사용자 검토를 받는 정지 지점**을 둔다.
 - Haiku·Sonnet·Opus 모델별로 케이스 1개씩 구조 통과/실패만 확인한다(공식 체크리스트).
 - 비용이 드는 단계(설명 최적화 `run_loop.py`, `claude plugin eval`)는 실행 전에 사용자에게 제안하고 승인받는다.
 
