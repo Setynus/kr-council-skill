@@ -1,12 +1,20 @@
 import copy
+import json
+import os
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+SCRIPT = ROOT / "council-kr" / "scripts" / "render_report.py"
+TEMPLATE = (ROOT / "council-kr" / "assets" / "report.html")
 sys.path.insert(0, str(ROOT / "council-kr" / "scripts"))
 
-from render_report import ADVISOR_IDS, make_mapping, validate  # noqa: E402
+from render_report import ADVISOR_IDS, make_mapping, render, validate  # noqa: E402
+
+DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
 NAMES = {
     "contrarian": "반대자",
@@ -102,6 +110,99 @@ class ValidateTests(unittest.TestCase):
         d["mode"] = "x"
         d["verdict"]["confidence"] = "?"
         self.assertGreaterEqual(len(validate(d)), 2)
+
+
+def template():
+    return TEMPLATE.read_text(encoding="utf-8")
+
+
+class RenderTests(unittest.TestCase):
+    def test_render_contains_five_cards_and_korean(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count('class="advisor-card"'), 5)
+        self.assertIn("반대자", html)
+        self.assertIn(DISCLAIMER, html)
+        self.assertIn('<meta charset="utf-8">', html)
+
+    def test_render_escapes_html(self):
+        d = sample()
+        d["question"] = "<script>alert(1)</script> & \"따옴표\""
+        html = render(d, template())
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertIn("&lt;script&gt;", html)
+
+    def test_render_invalid_raises(self):
+        d = sample()
+        d["advisors"].pop()
+        with self.assertRaises(ValueError):
+            render(d, template())
+
+    def test_mode_banner_single_session(self):
+        d = sample()
+        d["mode"] = "single-session"
+        self.assertIn("독립성이 낮습니다", render(d, template()))
+        self.assertNotIn("독립성이 낮습니다", render(sample(), template()))
+
+    def test_verdict_shows_minority_and_confidence(self):
+        d = sample()
+        d["verdict"]["minority_kept"] = True
+        d["verdict"]["confidence"] = "낮음"
+        html = render(d, template())
+        self.assertIn("소수 의견 유지됨", html)
+        self.assertIn("신뢰도", html)
+        self.assertIn("낮음", html)
+
+    def test_review_table_shows_advisor_names_not_only_letters(self):
+        html = render(sample(), template())
+        self.assertIn("확장가", html.split("상호 검토", 1)[1])
+
+
+class CliTests(unittest.TestCase):
+    def _run(self, args, cwd=None, env=None):
+        return subprocess.run([sys.executable, str(SCRIPT), *args], cwd=cwd, env=env,
+                              capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+    def _write_json(self, tmp, data):
+        path = Path(tmp) / "council.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def test_cli_cp949_env(self):
+        d = sample()
+        d["question"] += " 😀"
+        env = dict(os.environ, PYTHONUTF8="0", PYTHONIOENCODING="cp949")
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "r.html"
+            r = self._run(["render", str(self._write_json(tmp, d)), "--out", str(out)], env=env)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("반대자", out.read_text(encoding="utf-8"))
+
+    def test_cli_invalid_exit_code_2(self):
+        d = sample()
+        d["advisors"].pop()
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(["render", str(self._write_json(tmp, d)), "--out", str(Path(tmp) / "r.html")])
+            self.assertEqual(r.returncode, 2)
+            self.assertTrue(r.stderr.strip())
+
+    def test_cli_runs_from_other_cwd(self):
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as elsewhere:
+            out = Path(tmp) / "r.html"
+            r = self._run(["render", str(self._write_json(tmp, sample())), "--out", str(out)], cwd=elsewhere)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertTrue(out.exists())
+
+    def test_cli_shuffle_prints_valid_mapping(self):
+        r = self._run(["shuffle", "--seed", "3"])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout), make_mapping(3))
+
+    def test_cli_creates_missing_output_folder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "council-reports" / "r.html"
+            r = self._run(["render", str(self._write_json(tmp, sample())), "--out", str(out)])
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertTrue(out.exists())
 
 
 if __name__ == "__main__":
