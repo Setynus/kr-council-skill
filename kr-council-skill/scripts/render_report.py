@@ -1,4 +1,4 @@
-"""council-kr 보고서 도구: A~E 셔플 매핑, council JSON 검증, HTML 렌더링.
+"""kr-council-skill 보고서 도구: A~E 셔플 매핑, council JSON 검증, HTML 렌더링.
 
 표준 라이브러리만 쓴다. 모든 입출력은 UTF-8이다.
 """
@@ -194,7 +194,7 @@ def _main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(errors="replace")
-    parser = argparse.ArgumentParser(description="council-kr 보고서 도구")
+    parser = argparse.ArgumentParser(description="kr-council-skill 보고서 도구")
     sub = parser.add_subparsers(dest="cmd", required=True)
     shuffle = sub.add_parser("shuffle", help="A~E 익명 매핑을 JSON으로 출력")
     shuffle.add_argument("--seed", type=int, default=None)

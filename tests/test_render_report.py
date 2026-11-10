@@ -8,9 +8,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = ROOT / "council-kr" / "scripts" / "render_report.py"
-TEMPLATE = (ROOT / "council-kr" / "assets" / "report.html")
-sys.path.insert(0, str(ROOT / "council-kr" / "scripts"))
+SCRIPT = ROOT / "kr-council-skill" / "scripts" / "render_report.py"
+TEMPLATE = (ROOT / "kr-council-skill" / "assets" / "report.html")
+sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
 from render_report import ADVISOR_IDS, make_mapping, render, validate  # noqa: E402
 

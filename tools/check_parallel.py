@@ -1,4 +1,4 @@
-"""대화 기록(JSONL)에서 council-kr의 병렬·독립 규칙 위반을 찾는 개발 전용 도구.
+"""대화 기록(JSONL)에서 kr-council-skill의 병렬·독립 규칙 위반을 찾는 개발 전용 도구.
 
 사용: python tools/check_parallel.py <대화기록.jsonl>
 하위 에이전트 안에서 스킬을 돌렸다면 <세션>/subagents/agent-*.jsonl을 넘긴다.

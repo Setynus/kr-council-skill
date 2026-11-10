@@ -1,9 +1,9 @@
-"""council-kr/SKILL.md가 공식 스킬 작성 규칙(설계 문서 §6.5)을 지키는지 검사한다."""
+"""kr-council-skill/SKILL.md가 공식 스킬 작성 규칙(설계 문서 §6.5)을 지키는지 검사한다."""
 import re
 import unittest
 from pathlib import Path
 
-SKILL_DIR = Path(__file__).resolve().parent.parent / "council-kr"
+SKILL_DIR = Path(__file__).resolve().parent.parent / "kr-council-skill"
 SKILL_MD = SKILL_DIR / "SKILL.md"
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 FIRST_OR_SECOND_PERSON = ("나는", "내가", "당신", "너는", "제가", "저는", "I can", "You can")
@@ -29,7 +29,7 @@ class SkillMdTests(unittest.TestCase):
 
     def test_name_rules(self):
         name = self.fields.get("name", "")
-        self.assertEqual(name, "council-kr")
+        self.assertEqual(name, "kr-council-skill")
         self.assertRegex(name, r"^[a-z0-9]+(-[a-z0-9]+)*$")
         self.assertLessEqual(len(name), 64)
         self.assertEqual(name, SKILL_DIR.name)
