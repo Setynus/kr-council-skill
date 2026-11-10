@@ -107,6 +107,20 @@ class SkillMdTests(unittest.TestCase):
     def test_no_readme_in_skill_folder(self):
         self.assertFalse((SKILL_DIR / "README.md").exists())
 
+    def test_cost_notice_does_not_skip_when_preconsented(self):
+        self.assertNotIn("이미 동의했으면 다시 묻지 않는다", self.text)
+        self.assertIn("한 줄", self.body.split("## 1단계", 1)[1].split("## 2단계", 1)[0])
+
+    def test_reviewers_get_verbatim_responses(self):
+        section = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        self.assertIn("원문", section)
+        self.assertIn("요약", section)
+
+    def test_real_clock_for_timestamp(self):
+        section = self.body.split("## 5단계", 1)[1]
+        self.assertIn("date", section)
+        self.assertNotIn("0000", section)
+
 
 if __name__ == "__main__":
     unittest.main()
