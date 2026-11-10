@@ -122,6 +122,8 @@ date +"%Y%m%d-%H%M"
 | `reviews` | 검토 5개: `reviewer`(위원 id), `strongest`, `strongest_why`, `weakest`, `weakest_why`, `missed` |
 | `verdict` | `agree`[], `clash`[{`point`, `sides`}], `blindspots`[], `recommendation`, `first_action`, `confidence`, `minority_kept`(true/false) |
 
+`advisors`와 `reviews`의 문장은 위원이 답한 JSON에서 줄이거나 다듬거나 고치지 않고 그대로 옮긴다. 보고서 카드가 곧 결과물이라, 요약본이 들어가면 위원의 판단이 바뀐다.
+
 그다음 렌더링한다.
 
 ```

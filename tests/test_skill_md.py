@@ -121,6 +121,10 @@ class SkillMdTests(unittest.TestCase):
         self.assertIn("date", section)
         self.assertNotIn("0000", section)
 
+    def test_council_json_copies_advisor_text_unchanged(self):
+        section = self.body.split("## 5단계", 1)[1]
+        self.assertIn("고치지 않고 그대로", section)
+
 
 if __name__ == "__main__":
     unittest.main()
