@@ -4,7 +4,7 @@ description: 서로 다른 관점의 위원 5명이 한 결정을 따로 분석�
 license: MIT
 compatibility: Claude Code(병렬 실행), claude.ai(프롬프트 묶음·단일 세션 실행)에서 쓴다. 보고서 생성에 Python 3이 필요하다.
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   author: Setynus
 ---
 
