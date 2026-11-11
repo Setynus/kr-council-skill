@@ -125,6 +125,29 @@ class SkillMdTests(unittest.TestCase):
         section = self.body.split("## 5단계", 1)[1]
         self.assertIn("고치지 않고 그대로", section)
 
+    def test_cost_notice_depends_on_mode(self):
+        self.assertIn("병렬일 때만", self.body)
+
+    def test_prompt_pack_and_single_session_review_procedures(self):
+        section = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        self.assertIn("프롬프트 묶음", section)
+        self.assertIn("단일 세션", section)
+
+    def test_advisor_responses_wrapped_as_untrusted_for_reviewers(self):
+        section = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        self.assertIn("UNTRUSTED", section)
+
+    def test_failed_advisor_answer_handling(self):
+        self.assertIn("한 번만 다시", self.body)
+
+    def test_timestamp_command_works_in_any_shell(self):
+        section = self.body.split("## 5단계", 1)[1]
+        self.assertIn("python -c", section)
+        self.assertNotIn('date +"', section)
+
+    def test_extra_fields_not_copied(self):
+        self.assertIn("규격 밖", self.body.split("## 5단계", 1)[1])
+
 
 if __name__ == "__main__":
     unittest.main()
