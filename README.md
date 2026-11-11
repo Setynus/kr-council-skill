@@ -23,7 +23,7 @@ Karpathy의 llm-council 방식(자문 → 익명 상호 검토 → 의장 종합
 <table width="100%">
 <thead>
 <tr>
-<th width="34%" align="center"><img src="docs/spacer.gif" width="2000" height="1" align="left" alt="">호칭</th>
+<th width="34%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">호칭</th>
 <th width="66%" align="center">맡은 관점</th>
 </tr>
 </thead>
@@ -76,7 +76,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 <table width="100%">
 <thead>
 <tr>
-<th width="20%" align="center"><img src="docs/spacer.gif" width="2000" height="1" align="left" alt="">방식</th>
+<th width="20%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">방식</th>
 <th width="28%" align="center">언제</th>
 <th width="52%" align="center">비용·독립성</th>
 </tr>
@@ -102,7 +102,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 <table width="100%">
 <thead>
 <tr>
-<th width="30%" align="center"><img src="docs/spacer.gif" width="2000" height="1" align="left" alt="">경로</th>
+<th width="30%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">경로</th>
 <th width="70%" align="center">내용</th>
 </tr>
 </thead>
@@ -124,7 +124,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 <table width="100%">
 <thead>
 <tr>
-<th width="12%" align="center"><img src="docs/spacer.gif" width="2000" height="1" align="left" alt="">버전</th>
+<th width="12%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">버전</th>
 <th width="20%" align="center">날짜</th>
 <th width="68%" align="center">핵심 변경</th>
 </tr>
