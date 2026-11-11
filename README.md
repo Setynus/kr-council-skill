@@ -32,10 +32,10 @@ Karpathy의 llm-council 방식(자문 → 익명 상호 검토 → 의장 종합
 <tbody>
 <tr><td>투덜이 스머프&nbsp;(반대자)</td><td>이 선택이 실패한다면 가장 그럴듯한 이유를 찾는다</td></tr>
 <tr><td>똘똘이 스머프&nbsp;(본질 탐구자)</td><td>진짜 목적이 뭔지,<br>선택지가 맞는 질문인지부터 묻는다</td></tr>
-<tr><td>&emsp;&nbsp;&nbsp;화가 스머프&nbsp;(확장가)</td><td>잘 풀렸을 때의 상승 여력과 인접 기회를 본다</td></tr>
+<tr><td>&emsp;&nbsp;화가 스머프&nbsp;(확장가)</td><td>잘 풀렸을 때의 상승 여력과 인접 기회를 본다</td></tr>
 <tr><td>덜렁이 스머프&nbsp;(아웃사이더)</td><td>배경지식 없는 사람의 눈으로 당연한 것을 묻는다</td></tr>
 <tr><td>재주꾼 스머프&nbsp;(실행가)</td><td>내일 아침 첫 일과 가장 작은 검증 단계를 본다</td></tr>
-<tr><td>&emsp;&nbsp;&nbsp;파파 스머프&nbsp;(위원장)</td><td>다섯 답과 다섯 검토를 읽고 하나의 권고로 판정한다</td></tr>
+<tr><td>&emsp;&nbsp;파파 스머프&nbsp;(위원장)</td><td>다섯 답과 다섯 검토를 읽고 하나의 권고로 판정한다</td></tr>
 </tbody>
 </table>
 
