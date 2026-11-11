@@ -1,4 +1,13 @@
-# kr-council-skill
+# kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
+
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
+[![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
+[![Python](https://img.shields.io/badge/python-3.10%2B-yellow.svg)](tools/package_skill.py)
+[![test](https://github.com/Setynus/kr-council-skill/actions/workflows/test.yml/badge.svg)](https://github.com/Setynus/kr-council-skill/actions/workflows/test.yml)
+
+> 선택지가 갈리는 결정을 위원 5명이 따로 분석하고, 익명으로 서로 검토한 뒤, 위원장이 판정하는 Claude 스킬. 최근 변경은 [버전 이력](#버전-이력)을 보세요.
 
 선택지가 갈리는 결정을 **위원 5명이 따로 분석하고, 익명으로 서로 검토한 뒤, 위원장이 하나의 권고로 정리**하는 한국어 Claude 스킬입니다. 결과는 위원별 판단 카드와 위원장 최종 보고서가 담긴 HTML 대시보드로 나옵니다.
 
@@ -50,7 +59,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 2. 위원 5명이 서로 보지 못한 채 **동시에** 답합니다.
 3. 답을 A~E로 익명화해(순서는 스크립트가 섞음) 위원이 서로 검토합니다.
 4. 위원장이 합의·충돌·놓친 점·권고·**가장 먼저 할 한 가지**를 정리합니다.
-5. `council-reports/` 폴더에 HTML 보고서(`council-YYYYMMDD-HHMM.html`)와 `council.json`을 저장합니다.
+5. `council-reports/` 폴더에 HTML 보고서(`council-YYYYMMDD-HHMM.html`)와 같은 이름의 JSON을 저장합니다.
 
 ### 실행 방식 3가지
 | 방식 | 언제 | 비용·독립성 |
@@ -73,7 +82,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 kr-council-skill/     스킬 본체(SKILL.md, scripts/, assets/, references/, evals/)
 tests/  tools/        개발용 테스트와 도구  (python -m unittest discover tests)
 comparison/           다른 위원회 스킬과의 블라인드 비교 질문·기준선·결과
-docs/                 설계서, 구현 계획, 릴리스 점검 목록
+docs/                 설계서, 릴리스 점검 목록
 ```
 
 ## 검증 결과 요약
@@ -81,8 +90,18 @@ docs/                 설계서, 구현 계획, 릴리스 점검 목록
 - 병렬 호출이 한 번의 응답에 묶였는지, 독립성이 깨지지 않았는지를 대화 기록으로 검사하는 도구(`tools/check_parallel.py`)가 있습니다.
 - 다른 위원회 스킬과 질문 3개를 블라인드 비교했습니다(25점 만점 평균: 이 스킬 22.3, 단일 답변 17.3). 질문 수가 적고 같은 모델이 채점해 **일화적 비교**일 뿐입니다. 자세한 한계는 [`comparison/results/`](comparison/results/)의 보고서를 보세요.
 
+## 버전 이력
+
+| 버전 | 날짜 | 핵심 변경 |
+|---|---|---|
+| 0.2.0 | 2026-11-11 | 렌더러 입력 검증 강화, JSON 시각별 저장, 프로젝트 문서·CI 정비 |
+| 0.1.1 | 2026-11-11 | 출처 표기 정정(원본과 구성이 같다는 점 명시) |
+| 0.1.0 | 2026-11-11 | 첫 공개 릴리스 |
+
+전체 내용은 [CHANGELOG.md](CHANGELOG.md)를 보세요.
+
 ## 기여와 이슈
-버그나 제안은 GitHub Issues로 남겨 주세요. 변경은 테스트가 먼저 실패하고 통과하는 순서로 작성합니다.
+버그나 제안은 [GitHub Issues](https://github.com/Setynus/kr-council-skill/issues)로 남겨 주세요. 개발 방법은 [CONTRIBUTING.md](CONTRIBUTING.md), 보안 문제는 [SECURITY.md](SECURITY.md)를 보세요.
 
 ## 라이선스와 출처
 MIT License ([LICENSE](LICENSE)). 방법론과 영감의 출처, 스머프 캐릭터 호칭에 대한 고지는 [NOTICE.md](NOTICE.md)를 보세요.

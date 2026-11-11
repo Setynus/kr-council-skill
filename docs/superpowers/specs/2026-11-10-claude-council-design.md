@@ -112,7 +112,7 @@ kr-council-skill/                      # 저장소 루트(공개 GitHub)
   tools/blind_pack.py                # 블라인드 채점 묶음(개발 전용)
   comparison/                        # 교차 비교 평가: 질문, 루브릭, 동결 기준선, 결과(§7.2)
   kr-council-skill-workspace/              # skill-creator 실행 결과(gitignore)
-  docs/superpowers/specs|plans/
+  docs/superpowers/specs/
 ```
 
 - 설치: `~/.claude/skills/kr-council-skill` → `<저장소 루트>\kr-council-skill` 심볼릭 링크.
@@ -178,7 +178,7 @@ kr-council-skill/                      # 저장소 루트(공개 GitHub)
 - 상위 작업 폴더에는 `git init`하지 않고 이 저장소 폴더에서만 한다.
 
 ## 10. 단계 계획
-`docs/superpowers/plans/2026-11-10-claude-council.md` 참조.
+구현 계획은 작업 지시 형태라 공개 저장소에서 제거했다(진행 기록은 `CHANGELOG.md`).
 
 ## 11. 출처
 - Skill authoring best practices(공식): https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices

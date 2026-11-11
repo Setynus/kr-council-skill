@@ -1,0 +1,33 @@
+name: 버그 신고
+description: 스킬이나 렌더러가 기대와 다르게 동작할 때
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무슨 일이 일어났나요?
+      description: 기대한 결과와 실제 결과를 적어 주세요.
+    validations:
+      required: true
+  - type: dropdown
+    id: env
+    attributes:
+      label: 사용 환경
+      options: [Claude Code, claude.ai, 기타]
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: 실행 방식
+      options: [병렬, 프롬프트 묶음, 단일 세션, 모르겠음]
+  - type: input
+    id: version
+    attributes:
+      label: 스킬 버전
+      description: SKILL.md의 metadata.version 또는 릴리스 태그
+  - type: textarea
+    id: repro
+    attributes:
+      label: 재현 방법
+      description: 개인정보와 비밀번호는 지우고 적어 주세요.

@@ -1,0 +1,15 @@
+name: 제안
+description: 새 기능이나 개선 아이디어
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: 어떤 점이 달라지면 좋을까요?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 왜 필요한가요?
+      description: 어떤 결정 상황에서 불편했는지 적어 주세요.
