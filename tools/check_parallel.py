@@ -8,6 +8,7 @@
 그래서 '한 응답에 5개'는 줄 수가 아니라 message.id별 Agent 호출 수로 센다.
 """
 import json
+import re
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -16,6 +17,9 @@ AGENT_TOOL_NAMES = ("Agent", "Task")
 BATCH_SIZE = 5       # 위원 수. 자문 묶음과 검토 묶음이 각각 이 크기여야 한다.
 BATCHES_REQUIRED = 2  # 자문 5 + 검토 5
 LEAK_PROBE_CHARS = 40  # 앞선 결과의 앞 40자가 프롬프트에 있으면 새어 든 것으로 본다.
+RECEIPT_PREFIX = "Async agent launched"
+RECEIPT_RE = re.compile(r"agentId:\s*(\S+)")
+HANDBACK_RE = re.compile(r'<agent-message from="([^"]+)">\s*(.*?)</agent-message>', re.S)
 LEAK_MIN_CHARS = 30    # 이보다 짧은 결과는 우연히 겹칠 수 있어 검사하지 않는다.
 
 
@@ -43,20 +47,60 @@ def _result_text(block):
     return ""
 
 
-def check_parallel(entries):
-    """위반 문장 목록을 돌려준다. 비어 있으면 통과다."""
-    uses = []      # {"idx", "msg", "id", "type", "prompt"}
-    results = {}   # tool_use_id -> (idx, text)
+def _text_of(entry):
+    prompt = (entry.get("attachment") or {}).get("prompt")
+    if entry.get("type") == "attachment" and isinstance(prompt, str):
+        return prompt
+    c = (entry.get("message") or {}).get("content")
+    if isinstance(c, str):
+        return c
+    if isinstance(c, list):
+        return "".join(b.get("text", "") for b in c if isinstance(b, dict) and b.get("type") == "text")
+    return ""
+
+
+def _handback_text(body):
+    """하네스가 붙인 머리말과 들여쓰기를 걷어내고 위원이 쓴 본문만 남긴다."""
+    marker = "The report follows:"
+    if marker in body:
+        body = body.split(marker, 1)[1]
+    elif body.startswith("[Subagent hand-back]"):
+        body = body[len("[Subagent hand-back]"):]
+    return " ".join(line.strip() for line in body.strip().splitlines())
+
+
+def _collect(entries):
+    """Agent 호출 목록과 호출별 결과(시점, 본문)를 모은다.
+
+    실제 기록은 비동기다: Agent 호출의 tool_result는 접수 알림뿐이고, 위원의 답은 나중에
+    `<agent-message from="에이전트ID">` 사용자 메시지로 온다. 접수 알림은 결과로 세지 않는다.
+    """
+    uses, results, pending = [], {}, {}
     for idx, entry in enumerate(entries):
         for block in _blocks(entry):
-            if entry.get("type") == "assistant" and block.get("type") == "tool_use" \
-                    and block.get("name") in AGENT_TOOL_NAMES:
+            if entry.get("type") == "assistant" and block.get("type") == "tool_use"                     and block.get("name") in AGENT_TOOL_NAMES:
                 inp = block.get("input") or {}
                 uses.append({"idx": idx, "msg": (entry.get("message") or {}).get("id"),
                              "id": block.get("id"), "type": inp.get("subagent_type"),
                              "prompt": inp.get("prompt", "")})
             elif entry.get("type") == "user" and block.get("type") == "tool_result":
-                results[block.get("tool_use_id")] = (idx, _result_text(block))
+                text = _result_text(block)
+                m = RECEIPT_RE.search(text) if text.startswith(RECEIPT_PREFIX) else None
+                if m:
+                    pending[m.group(1)] = block.get("tool_use_id")
+                else:
+                    results[block.get("tool_use_id")] = (idx, text)
+        if entry.get("type") in ("user", "attachment"):
+            for aid, body in HANDBACK_RE.findall(_text_of(entry)):
+                use_id = pending.get(aid)
+                if use_id and use_id not in results:
+                    results[use_id] = (idx, _handback_text(body))
+    return uses, results
+
+
+def check_parallel(entries):
+    """위반 문장 목록을 돌려준다. 비어 있으면 통과다."""
+    uses, results = _collect(entries)
 
     errors = []
     groups = OrderedDict()
@@ -68,12 +112,22 @@ def check_parallel(entries):
         errors.append(f"Agent 호출이 한 응답에 {BATCH_SIZE}개 이상 묶여 있지 않습니다(순차 호출 의심)")
     elif len(batches) < BATCHES_REQUIRED:
         errors.append(f"자문 {BATCH_SIZE}개와 검토 {BATCH_SIZE}개, 두 묶음이 필요합니다(찾은 묶음: {len(batches)})")
+    for g in batches:
+        if len(g) != BATCH_SIZE:
+            errors.append(f"한 응답의 호출 수가 정확히 {BATCH_SIZE}개여야 합니다(찾은 수: {len(g)})")
 
     for u in uses:
         if u["type"] == "fork":
             errors.append(f"fork 유형 호출이 있습니다(호출 {u['id']}): 대화 전체를 물려받아 독립성이 깨집니다")
         elif not u["type"]:
             errors.append(f"subagent_type 미지정 호출이 있습니다(호출 {u['id']}): general-purpose로 명시해야 합니다")
+        elif u["type"] != "general-purpose":
+            errors.append(f"general-purpose가 아닌 유형 호출이 있습니다(호출 {u['id']}: {u['type']})")
+
+    unverified = [u["id"] for g in batches for u in g if u["id"] not in results]
+    if unverified:
+        errors.append(f"결과를 확인하지 못한 호출이 {len(unverified)}개 있습니다: 접수 알림만 있고 답이 기록에 없어 "
+                      "읽는 순서와 독립성을 검사할 수 없습니다")
 
     for n, batch in enumerate(batches, 1):
         last_launch = max(u["idx"] for u in batch)
@@ -81,6 +135,12 @@ def check_parallel(entries):
             got = results.get(u["id"])
             if got and got[0] < last_launch:
                 errors.append(f"{n}번째 묶음: 5개를 모두 시작하기 전에 결과를 읽었습니다(호출 {u['id']})")
+
+    if len(batches) >= 2:
+        first_done = max((results[u["id"]][0] for u in batches[0] if u["id"] in results), default=None)
+        second_start = min(u["idx"] for u in batches[1])
+        if first_done is not None and second_start < first_done:
+            errors.append("자문이 모두 끝나기 전에 검토 묶음을 시작했습니다")
 
     if batches:
         first = batches[0]
