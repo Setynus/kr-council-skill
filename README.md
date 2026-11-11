@@ -7,6 +7,8 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-yellow.svg)](tools/package_skill.py)
 [![test](https://github.com/Setynus/kr-council-skill/actions/workflows/test.yml/badge.svg)](https://github.com/Setynus/kr-council-skill/actions/workflows/test.yml)
 
+## ⚠️ **이 스킬은 병렬 방식으로 한 번에 하위 호출 11개가 들어 토큰을 많이 씁니다. 사소한 질문에는 쓰지 마세요.**
+
 > 선택지가 갈리는 결정을 위원 5명이 따로 분석하고, 익명으로 서로 검토한 뒤, 위원장이 판정하는 Claude 스킬. 최근 변경은 [버전 이력](#버전-이력)을 보세요.
 
 선택지가 갈리는 결정을 **위원 5명이 따로 분석하고, 익명으로 서로 검토한 뒤, 위원장이 하나의 권고로 정리**하는 한국어 Claude 스킬입니다. 결과는 위원별 판단 카드와 위원장 최종 보고서가 담긴 HTML 대시보드로 나옵니다.
