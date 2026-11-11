@@ -4,9 +4,12 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-12
+
 ### 변경
 - 하위 에이전트의 검토·위원장 답이 JSON이 아니거나 닫는 괄호 없이 잘려 오면 직접 고치지 않고 한 번 다시 부릅니다(이전에는 자문 단계에만 있던 규칙).
 - 검토·위원장 프롬프트에 "한국어로 답한다"를 쓰도록 했습니다(일부 검토가 영어로 오던 문제).
+- 커밋 작성자 정보를 정리하려고 `v0.2.0` 이후 커밋의 해시가 모두 바뀌었습니다. 태그, 릴리스, zip 파일은 그대로입니다.
 
 ## [0.2.0] - 2026-11-11
 
@@ -35,7 +38,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.1.0
