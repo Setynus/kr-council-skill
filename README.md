@@ -25,7 +25,7 @@ Karpathy의 llm-council 방식(자문 → 익명 상호 검토 → 의장 종합
 <table width="100%">
 <thead>
 <tr>
-<th width="34%" align="center">호칭<img src="docs/spacer.png" width="356" height="1" align="left" alt=""></th>
+<th width="34%" align="center">호칭<img src="docs/spacer.png" width="338" height="1" align="left" alt=""></th>
 <th width="66%" align="center">맡은 관점</th>
 </tr>
 </thead>
@@ -82,7 +82,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 <table width="100%">
 <thead>
 <tr>
-<th width="20%" align="center">방식<img src="docs/spacer.png" width="58" height="1" align="left" alt=""></th>
+<th width="20%" align="center">방식<br><img src="docs/spacer.png" width="88" height="1" align="left" alt=""></th>
 <th width="28%" align="center">언제</th>
 <th width="52%" align="center">비용·독립성</th>
 </tr>
