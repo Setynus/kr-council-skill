@@ -148,6 +148,17 @@ class SkillMdTests(unittest.TestCase):
     def test_extra_fields_not_copied(self):
         self.assertIn("규격 밖", self.body.split("## 5단계", 1)[1])
 
+    def test_smurf_display_names(self):
+        names = ("투덜이 스머프", "똘똘이 스머프", "화가 스머프", "덜렁이 스머프", "재주꾼 스머프", "파파스머프")
+        advisors_md = (SKILL_DIR / "references" / "advisors.md").read_text(encoding="utf-8")
+        for name in names:
+            self.assertIn(name, self.body)
+        for name in names[:5]:
+            self.assertIn(name, advisors_md)
+
+    def test_prompts_use_functional_names_not_character_names(self):
+        self.assertIn("호출 프롬프트에는 기능 이름", self.body)
+
 
 if __name__ == "__main__":
     unittest.main()

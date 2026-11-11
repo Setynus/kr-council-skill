@@ -17,11 +17,11 @@ from render_report import ADVISOR_IDS, make_mapping, render, validate  # noqa: E
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
 NAMES = {
-    "contrarian": "반대자",
-    "first_principles": "제1원리 사색가",
-    "expansionist": "확장가",
-    "outsider": "아웃사이더",
-    "executor": "실행가",
+    "contrarian": "투덜이 스머프(반대자)",
+    "first_principles": "똘똘이 스머프(제1원리 사색가)",
+    "expansionist": "화가 스머프(확장가)",
+    "outsider": "덜렁이 스머프(아웃사이더)",
+    "executor": "재주꾼 스머프(실행가)",
 }
 MAPPING = {"A": "contrarian", "B": "first_principles", "C": "expansionist",
            "D": "outsider", "E": "executor"}
@@ -125,7 +125,8 @@ class RenderTests(unittest.TestCase):
     def test_render_contains_five_cards_and_korean(self):
         html = render(sample(), template())
         self.assertEqual(html.count('class="advisor-card"'), 5)
-        self.assertIn("반대자", html)
+        self.assertIn("투덜이 스머프(반대자)", html)
+        self.assertIn("파파스머프", html)
         self.assertIn(DISCLAIMER, html)
         self.assertIn('<meta charset="utf-8">', html)
 
@@ -159,7 +160,7 @@ class RenderTests(unittest.TestCase):
 
     def test_review_table_shows_advisor_names_not_only_letters(self):
         html = render(sample(), template())
-        self.assertIn("확장가", html.split("상호 검토", 1)[1])
+        self.assertIn("화가 스머프(확장가)", html.split("상호 검토", 1)[1])
 
 
 class CliTests(unittest.TestCase):
@@ -180,7 +181,7 @@ class CliTests(unittest.TestCase):
             out = Path(tmp) / "r.html"
             r = self._run(["render", str(self._write_json(tmp, d)), "--out", str(out)], env=env)
             self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertIn("반대자", out.read_text(encoding="utf-8"))
+            self.assertIn("투덜이 스머프(반대자)", out.read_text(encoding="utf-8"))
 
     def test_cli_invalid_exit_code_2(self):
         d = sample()

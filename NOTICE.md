@@ -11,5 +11,8 @@
 ## 비교 기준선의 ecc 출력
 `comparison/baselines/*.ecc-council.md`는 ecc(Everything Claude Code) 2.2.3의 `ecc:council` 스킬을 실행해 얻은 **출력만** 담는다. 스킬 본문은 복사하지 않았다. ecc는 MIT License(Copyright (c) 2026 Affaan Mustafa)이다.
 
+## 캐릭터 호칭
+보고서의 위원 호칭(투덜이 스머프, 똘똘이 스머프, 파파스머프 등)은 이해를 돕는 비유이며, 스머프(The Smurfs)는 Peyo 및 권리자(IMPS)의 상표·저작물이다. 이 프로젝트는 권리자와 제휴·후원 관계가 없고, 캐릭터 이미지나 원작 문장을 쓰지 않는다. 호칭만 쓴다.
+
 ## 이 저장소의 라이선스
 LICENSE 파일을 참고한다(공개 여부와 함께 소유자가 정한다).
