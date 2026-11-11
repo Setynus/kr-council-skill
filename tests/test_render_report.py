@@ -18,7 +18,7 @@ DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독�
 
 NAMES = {
     "contrarian": "투덜이 스머프(반대자)",
-    "first_principles": "똘똘이 스머프(제1원리 사색가)",
+    "first_principles": "똘똘이 스머프(본질 탐구자)",
     "expansionist": "화가 스머프(확장가)",
     "outsider": "덜렁이 스머프(아웃사이더)",
     "executor": "재주꾼 스머프(실행가)",

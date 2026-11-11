@@ -2,3 +2,4 @@ council-reports/
 kr-council-skill-workspace/
 __pycache__/
 .superpowers/
+dist/

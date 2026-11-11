@@ -155,9 +155,21 @@ class SkillMdTests(unittest.TestCase):
             self.assertIn(name, self.body)
         for name in names[:5]:
             self.assertIn(name, advisors_md)
+        self.assertIn("본질 탐구자", self.body)
+        self.assertNotIn("제1원리 사색가", self.body)
+        self.assertNotIn("제1원리 사색가", advisors_md)
 
     def test_prompts_use_functional_names_not_character_names(self):
         self.assertIn("호출 프롬프트에는 기능 이름", self.body)
+
+    def test_frontmatter_plain_scalars_are_yaml_safe(self):
+        front = self.text.split("---", 2)[1]
+        for line in front.splitlines():
+            key, _, value = line.partition(": ")
+            if line.startswith(" ") or not value:
+                continue
+            for hazard in (": ", " #"):
+                self.assertNotIn(hazard, value, f"{key}: YAML 일반 문자열에 '{hazard}'가 있음")
 
 
 if __name__ == "__main__":

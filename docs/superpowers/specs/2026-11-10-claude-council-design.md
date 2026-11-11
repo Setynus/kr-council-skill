@@ -9,7 +9,7 @@
 
 한국어 사용자가 어려운 결정을 내릴 때, 한 번의 답변 대신 서로 다른 관점의 위원 5명과 위원장의 판정을 받는 Claude 스킬을 만든다.
 
-- 사용자: 본인 한 명. 비공개 GitHub 저장소 `Setynus/kr-council-skill`에서 관리한다.
+- 사용자: 본인 한 명. 공개(MIT) GitHub 저장소 — 처음에는 비공개 계획이었으나 사용자가 처음부터 공개로 변경 `Setynus/kr-council-skill`에서 관리한다.
 - 영감: Karpathy의 llm-council 방법론(MIT)과 `aiwithremy/claude-skills-llm-council`. 원본은 라이선스가 없으므로 **문장을 옮기지 않고 같은 방법론으로 처음부터 새로 쓴다.**
 - 기존 `ecc:council`, `ecc:council-multi-model`은 영어권 기준이다. 한국어 트리거·출력, 한국 제도·시장 맥락, 시각적 보고서가 빠져 있다.
 
@@ -98,7 +98,7 @@ ecc에서 가져옴: 하위 에이전트에 질문과 필요한 맥락만 전달
 공식 가이드 규칙: 스킬 폴더 이름은 `name`과 같은 kebab-case, 파일은 정확히 `SKILL.md`, **스킬 폴더 안에 README.md 금지**. 그래서 배포되는 스킬 폴더와 개발용 파일을 나눈다.
 
 ```
-kr-council-skill/                      # 저장소 루트(비공개 GitHub)
+kr-council-skill/                      # 저장소 루트(공개 GitHub)
   README.md  NOTICE.md  .gitignore
   kr-council-skill/                        # ← 스킬 폴더(배포·설치 대상, README 없음)
     SKILL.md
