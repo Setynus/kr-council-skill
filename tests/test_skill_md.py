@@ -174,6 +174,9 @@ class SkillMdTests(unittest.TestCase):
     def test_python3_fallback_documented(self):
         self.assertIn("python3", self.body)
 
+    def test_background_results_wait_for_all_five(self):
+        self.assertIn("일부만 먼저 도착", self.body)
+
 
 if __name__ == "__main__":
     unittest.main()
