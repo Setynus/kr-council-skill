@@ -110,6 +110,42 @@ class ValidateTests(unittest.TestCase):
         d["mapping"] = {"A": 1, "B": "x", "C": {"k": 1}, "D": "z", "E": "w"}
         self.assertTrue(any("mapping" in e for e in validate(d)))
 
+    def test_validate_agree_items_must_be_text(self):
+        d = sample()
+        d["verdict"]["agree"] = ["정상", None, 123]
+        self.assertTrue(any("agree" in e for e in validate(d)))
+
+    def test_validate_agree_must_not_be_empty(self):
+        d = sample()
+        d["verdict"]["agree"] = []
+        self.assertTrue(any("agree" in e for e in validate(d)))
+
+    def test_validate_blindspots_items_must_be_text(self):
+        d = sample()
+        d["verdict"]["blindspots"] = [{"x": "<b>"}]
+        self.assertTrue(any("blindspots" in e for e in validate(d)))
+
+    def test_validate_minority_kept_requires_a_clash(self):
+        d = sample()
+        d["verdict"]["clash"] = []
+        d["verdict"]["minority_kept"] = True
+        self.assertTrue(any("minority_kept" in e for e in validate(d)))
+
+    def test_validate_strongest_and_weakest_must_differ(self):
+        d = sample()
+        d["reviews"][0]["weakest"] = d["reviews"][0]["strongest"]
+        self.assertTrue(any("같은" in e for e in validate(d)))
+
+    def test_validate_duplicate_advisor_names(self):
+        d = sample()
+        d["advisors"][1]["name"] = d["advisors"][0]["name"]
+        self.assertTrue(any("이름" in e for e in validate(d)))
+
+    def test_validate_clash_error_mentions_string_sides(self):
+        d = sample()
+        d["verdict"]["clash"] = [{"point": "광고", "sides": ["a", "b"]}]
+        self.assertTrue(any("문자열" in e for e in validate(d)))
+
     def test_validate_collects_all_errors(self):
         d = copy.deepcopy(sample())
         d["mode"] = "x"

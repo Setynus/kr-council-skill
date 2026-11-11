@@ -76,6 +76,9 @@ def validate(data):
                 if not isinstance(reasons, list) or len(reasons) != REASONS_COUNT \
                         or not all(_text(r) for r in reasons):
                     errors.append(f"{where}: 'reasons'는 비어 있지 않은 문자열 {REASONS_COUNT}개여야 합니다")
+        names = [a.get("name") for a in advisors if isinstance(a, dict)]
+        if len(set(map(str, names))) != len(names):
+            errors.append("위원 이름이 서로 달라야 합니다(중복된 이름이 있습니다)")
         if sorted(map(str, seen)) != sorted(ADVISOR_IDS):
             errors.append(f"위원 id가 {list(ADVISOR_IDS)}와 일치해야 합니다(받은 값: {seen})")
 
@@ -102,18 +105,25 @@ def validate(data):
             if mapping_ok and rv.get("strongest") in tuple(LETTERS) \
                     and mapping[rv["strongest"]] == rv.get("reviewer"):
                 errors.append(f"{where}: 자기 자신의 응답({rv['strongest']})을 가장 강한 응답으로 골랐습니다")
+            if rv.get("strongest") == rv.get("weakest") and rv.get("strongest") in tuple(LETTERS):
+                errors.append(f"{where}: 가장 강한 응답과 가장 약한 응답이 같은 글자({rv['strongest']})입니다")
         if sorted(map(str, reviewers)) != sorted(ADVISOR_IDS):
             errors.append(f"reviews: 검토자 id가 위원 5명과 일치해야 합니다(받은 값: {reviewers})")
 
     verdict = data.get("verdict")
     if _require(verdict, ("recommendation", "first_action"), "verdict", errors):
         for key in ("agree", "blindspots"):
-            if not isinstance(verdict.get(key), list):
-                errors.append(f"verdict: '{key}'는 목록이어야 합니다")
+            items = verdict.get(key)
+            if not isinstance(items, list) or not all(_text(x) for x in items):
+                errors.append(f"verdict: '{key}'는 비어 있지 않은 문자열의 목록이어야 합니다")
+        if isinstance(verdict.get("agree"), list) and not verdict["agree"]:
+            errors.append("verdict: 'agree'에는 항목이 하나 이상 있어야 합니다")
         clash = verdict.get("clash")
         if not isinstance(clash, list) or not all(
                 isinstance(c, dict) and _text(c.get("point")) and _text(c.get("sides")) for c in clash):
-            errors.append("verdict: 'clash'는 point·sides가 있는 항목의 목록이어야 합니다")
+            errors.append("verdict: 'clash'는 point와 sides(둘 다 문자열)가 있는 항목의 목록이어야 합니다")
+        elif verdict.get("minority_kept") is True and not clash:
+            errors.append("verdict: 'minority_kept'가 true이면 'clash'에 충돌이 하나 이상 있어야 합니다")
         if verdict.get("confidence") not in CONFIDENCES:
             errors.append(f"verdict: 'confidence'는 {', '.join(CONFIDENCES)} 중 하나여야 합니다")
         if not isinstance(verdict.get("minority_kept"), bool):

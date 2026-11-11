@@ -177,6 +177,17 @@ class SkillMdTests(unittest.TestCase):
     def test_background_results_wait_for_all_five(self):
         self.assertIn("일부만 먼저 도착", self.body)
 
+    def test_council_json_is_not_overwritten(self):
+        section = self.body.split("## 5단계", 1)[1]
+        self.assertIn("council-YYYYMMDD-HHMM.json", section)
+
+    def test_untrusted_marker_escape_rule(self):
+        self.assertIn("꺾쇠 안쪽에 공백", self.body)
+
+    def test_python3_note_is_in_critical_section(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("python3", section)
+
 
 if __name__ == "__main__":
     unittest.main()
