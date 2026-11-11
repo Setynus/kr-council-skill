@@ -122,7 +122,7 @@ python "${CLAUDE_SKILL_DIR}/scripts/render_report.py" shuffle
 python -c "import datetime; print(datetime.datetime.now().strftime('%Y%m%d-%H%M'))"
 ```
 
-어느 셸에서든 되도록 `date` 대신 위 명령을 쓴다. 이 값을 파일명에, 같은 시각을 `created`에 쓴다.
+어느 셸에서든 되도록 `date` 대신 위 명령을 쓴다. 이 문서의 `python` 명령은 `python`이 없고 `python3`만 있는 환경(macOS, 일부 Linux)에서는 `python3`로 바꿔 실행한다. 이 값을 파일명에, 같은 시각을 `created`에 쓴다.
 
 작업 폴더의 `council-reports/` 아래에 `council.json`을 저장한다. 구조는 다음과 같다.
 

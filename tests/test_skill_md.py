@@ -171,6 +171,9 @@ class SkillMdTests(unittest.TestCase):
             for hazard in (": ", " #"):
                 self.assertNotIn(hazard, value, f"{key}: YAML 일반 문자열에 '{hazard}'가 있음")
 
+    def test_python3_fallback_documented(self):
+        self.assertIn("python3", self.body)
+
 
 if __name__ == "__main__":
     unittest.main()
