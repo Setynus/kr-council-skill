@@ -105,6 +105,11 @@ class ValidateTests(unittest.TestCase):
         d["mode"] = "x"
         self.assertTrue(validate(d))
 
+    def test_validate_mixed_type_mapping_is_an_error_not_a_crash(self):
+        d = sample()
+        d["mapping"] = {"A": 1, "B": "x", "C": {"k": 1}, "D": "z", "E": "w"}
+        self.assertTrue(any("mapping" in e for e in validate(d)))
+
     def test_validate_collects_all_errors(self):
         d = copy.deepcopy(sample())
         d["mode"] = "x"
@@ -203,6 +208,22 @@ class CliTests(unittest.TestCase):
             r = self._run(["render", str(self._write_json(tmp, sample())), "--out", str(out)])
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertTrue(out.exists())
+
+    def test_cli_lone_surrogate_exit_2_and_no_empty_file(self):
+        d = sample()
+        d["title"] = "제목 " + chr(0xD83D)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "r.html"
+            path = Path(tmp) / "council.json"
+            path.write_text(json.dumps(d), encoding="utf-8")
+            r = self._run(["render", str(path), "--out", str(out)])
+            self.assertEqual(r.returncode, 2, r.stderr)
+            self.assertFalse(out.exists())
+
+    def test_cli_output_path_is_a_folder_exit_2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(["render", str(self._write_json(tmp, sample())), "--out", tmp])
+            self.assertEqual(r.returncode, 2, r.stderr)
 
 
 if __name__ == "__main__":

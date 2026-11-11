@@ -81,6 +81,7 @@ def validate(data):
 
     mapping = data.get("mapping")
     mapping_ok = (isinstance(mapping, dict) and set(mapping) == set(LETTERS)
+                  and all(isinstance(v, str) for v in mapping.values())
                   and sorted(mapping.values()) == sorted(ADVISOR_IDS))
     if not mapping_ok:
         errors.append("mapping: A~E가 위원 5명과 1:1로 대응해야 합니다")
@@ -208,13 +209,13 @@ def _main(argv=None):
         return 0
     try:
         data = json.loads(Path(args.json_path).read_text(encoding="utf-8"))
-        text = render(data, TEMPLATE_PATH.read_text(encoding="utf-8"))
+        payload = render(data, TEMPLATE_PATH.read_text(encoding="utf-8")).encode("utf-8")
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(payload)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"보고서를 만들 수 없습니다:\n{exc}", file=sys.stderr)
         return VALIDATION_ERROR_EXIT
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(text, encoding="utf-8")
     print(f"저장했습니다: {out}")
     return 0
 
