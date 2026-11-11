@@ -140,6 +140,13 @@ class SkillMdTests(unittest.TestCase):
     def test_failed_advisor_answer_handling(self):
         self.assertIn("한 번만 다시", self.body)
 
+    def test_retry_and_korean_rules_cover_review_and_chair_steps(self):
+        self.assertIn("닫는 괄호", self.body)
+        for head, tail in (("## 3단계", "## 4단계"), ("## 4단계", "## 5단계")):
+            section = self.body.split(head, 1)[1].split(tail, 1)[0]
+            self.assertIn("한국어", section)
+            self.assertIn("재호출 규칙", section)
+
     def test_timestamp_command_works_in_any_shell(self):
         section = self.body.split("## 5단계", 1)[1]
         self.assertIn("python -c", section)
