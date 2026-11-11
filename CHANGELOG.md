@@ -14,7 +14,7 @@
 - 렌더러가 더 엄격하게 검사합니다. `agree`는 비어 있지 않은 문자열이 하나 이상, `blindspots`는 문자열 목록이어야 하고, `minority_kept`가 `true`이면 `clash`가 하나 이상 있어야 합니다. 검토에서 가장 강한 응답과 가장 약한 응답이 같은 글자이거나 위원 이름이 겹치면 오류입니다. (이전 버전에서 통과하던 부정확한 `council.json`이 이제 종료 코드 2로 거부됩니다.)
 - 보고서 JSON은 `council-YYYYMMDD-HHMM.json`으로 저장해 이전 실행 결과를 덮어쓰지 않습니다.
 - 맥락 안의 `<BEGIN_UNTRUSTED>`/`<END_UNTRUSTED>` 문자열을 무력화하는 규칙과, `python3` 대체 안내를 `## 중요`로 옮겼습니다.
-- 저장소에서 구현 계획 문서를 제거하고 이력을 정리했습니다. 이 과정에서 `v0.1.0`, `v0.1.1` 태그와 릴리스를 삭제했습니다(내용은 0.2.0에 모두 포함).
+- 저장소에서 구현 계획 문서를 제거하고, 문서 이력에 남아 있던 개발 환경 정보를 지웠습니다. 이 과정에서 커밋 해시가 모두 바뀌었고 `v0.1.0`, `v0.1.1` 태그도 새 해시로 옮겨졌습니다(릴리스와 zip 파일은 그대로입니다).
 
 ## [0.1.1] - 2026-11-11
 
@@ -33,3 +33,5 @@
 
 [Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.0
+[0.1.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.1.1
+[0.1.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.1.0
