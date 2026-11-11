@@ -20,22 +20,26 @@ Karpathy의 llm-council 방식(자문 → 익명 상호 검토 → 의장 종합
 
 ## 위원 소개
 
+<div align="center">
+
 <table width="100%">
 <thead>
 <tr>
-<th width="34%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">호칭</th>
+<th width="34%" align="center">호칭<img src="docs/spacer.png" width="356" height="1" align="left" alt=""></th>
 <th width="66%" align="center">맡은 관점</th>
 </tr>
 </thead>
 <tbody>
-<tr><td>투덜이 스머프(반대자)</td><td>이 선택이 실패한다면 가장 그럴듯한 이유를 찾는다</td></tr>
-<tr><td>똘똘이 스머프(본질 탐구자)</td><td>진짜 목적이 뭔지, 선택지가 맞는 질문인지부터 묻는다</td></tr>
-<tr><td>화가 스머프(확장가)</td><td>잘 풀렸을 때의 상승 여력과 인접 기회를 본다</td></tr>
-<tr><td>덜렁이 스머프(아웃사이더)</td><td>배경지식 없는 사람의 눈으로 당연한 것을 묻는다</td></tr>
-<tr><td>재주꾼 스머프(실행가)</td><td>내일 아침 첫 일과 가장 작은 검증 단계를 본다</td></tr>
-<tr><td>파파스머프(위원장)</td><td>다섯 답과 다섯 검토를 읽고 하나의 권고로 판정한다</td></tr>
+<tr><td>투덜이 스머프<br>(반대자)</td><td>이 선택이 실패한다면 가장 그럴듯한 이유를 찾는다</td></tr>
+<tr><td>똘똘이 스머프<br>(본질 탐구자)</td><td>진짜 목적이 뭔지,<br>선택지가 맞는 질문인지부터 묻는다</td></tr>
+<tr><td>화가 스머프<br>(확장가)</td><td>잘 풀렸을 때의 상승 여력과 인접 기회를 본다</td></tr>
+<tr><td>덜렁이 스머프<br>(아웃사이더)</td><td>배경지식 없는 사람의 눈으로 당연한 것을 묻는다</td></tr>
+<tr><td>재주꾼 스머프<br>(실행가)</td><td>내일 아침 첫 일과 가장 작은 검증 단계를 본다</td></tr>
+<tr><td>파파스머프<br>(위원장)</td><td>다섯 답과 다섯 검토를 읽고 하나의 권고로 판정한다</td></tr>
 </tbody>
 </table>
+
+</div>
 
 ## 설치
 
@@ -73,20 +77,24 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 5. `council-reports/` 폴더에 HTML 보고서(`council-YYYYMMDD-HHMM.html`)와 같은 이름의 JSON을 저장합니다.
 
 ### 실행 방식 3가지
+<div align="center">
+
 <table width="100%">
 <thead>
 <tr>
-<th width="20%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">방식</th>
+<th width="20%" align="center">방식<img src="docs/spacer.png" width="58" height="1" align="left" alt=""></th>
 <th width="28%" align="center">언제</th>
 <th width="52%" align="center">비용·독립성</th>
 </tr>
 </thead>
 <tbody>
-<tr><td>병렬</td><td>Agent 도구가 있을 때(Claude Code)</td><td>하위 호출 11개(자문 5 + 검토 5 + 위원장 1), 독립성 높음</td></tr>
-<tr><td>프롬프트&nbsp;묶음</td><td>Agent 도구가 없고 진짜 독립을 원할 때</td><td>사용자가 새 대화 10개를 직접 열어 결과를 붙여 넣음, 독립성 높음</td></tr>
-<tr><td>단일&nbsp;세션</td><td>그 외</td><td>한 대화에서 차례로 진행, 빠르지만 독립성 낮음(신뢰도를 낮춤)</td></tr>
+<tr><td>병렬</td><td>Agent 도구가 있을 때<br>(Claude Code)</td><td>하위 호출 11개<br>(자문 5 + 검토 5 + 위원장 1),<br>독립성 높음</td></tr>
+<tr><td>프롬프트&nbsp;묶음</td><td>Agent 도구가 없고 진짜 독립을 원할 때</td><td>사용자가 새 대화 10개를 직접 열어 결과를 붙여 넣음,<br>독립성 높음</td></tr>
+<tr><td>단일&nbsp;세션</td><td>그 외</td><td>한 대화에서 차례로 진행,<br>빠르지만 독립성 낮음<br>(신뢰도를 낮춤)</td></tr>
 </tbody>
 </table>
+
+</div>
 
 실행 방식은 보고서 상단에 표시됩니다.
 
@@ -99,20 +107,24 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 구성
 
+<div align="center">
+
 <table width="100%">
 <thead>
 <tr>
-<th width="30%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">경로</th>
+<th width="30%" align="center">경로<img src="docs/spacer.png" width="343" height="1" align="left" alt=""></th>
 <th width="70%" align="center">내용</th>
 </tr>
 </thead>
 <tbody>
-<tr><td><code>kr-council-skill/</code></td><td>스킬 본체(SKILL.md, scripts/, assets/, references/, evals/)</td></tr>
-<tr><td><code>tests/</code>, <code>tools/</code></td><td>개발용 테스트와 도구 (<code>python -m unittest discover tests</code>)</td></tr>
+<tr><td><code>kr-council-skill/</code></td><td>스킬 본체<br>(SKILL.md, scripts/, assets/, references/, evals/)</td></tr>
+<tr><td><code>tests/</code>,<br><code>tools/</code></td><td>개발용 테스트와 도구<br>(<code>python -m unittest discover tests</code>)</td></tr>
 <tr><td><code>comparison/</code></td><td>다른 위원회 스킬과의 블라인드 비교 질문·기준선·결과</td></tr>
 <tr><td><code>docs/</code></td><td>설계서, 릴리스 점검 목록</td></tr>
 </tbody>
 </table>
+
+</div>
 
 ## 검증 결과 요약
 - 단위 테스트 70여 개(`python -m unittest discover tests`).
@@ -121,20 +133,24 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 버전 이력
 
+<div align="center">
+
 <table width="100%">
 <thead>
 <tr>
-<th width="12%" align="center"><img src="docs/spacer.png" width="2000" height="1" align="left" alt="">버전</th>
+<th width="12%" align="center">버전<img src="docs/spacer.png" width="383" height="1" align="left" alt=""></th>
 <th width="20%" align="center">날짜</th>
 <th width="68%" align="center">핵심 변경</th>
 </tr>
 </thead>
 <tbody>
-<tr><td>0.2.0</td><td>2026&#8209;11&#8209;11</td><td>렌더러 입력 검증 강화, JSON 시각별 저장, 프로젝트 문서·CI 정비</td></tr>
-<tr><td>0.1.1</td><td>2026&#8209;11&#8209;11</td><td>출처 표기 정정(원본과 구성이 같다는 점 명시)</td></tr>
+<tr><td>0.2.0</td><td>2026&#8209;11&#8209;11</td><td>렌더러 입력 검증 강화,<br>JSON 시각별 저장,<br>프로젝트 문서·CI 정비</td></tr>
+<tr><td>0.1.1</td><td>2026&#8209;11&#8209;11</td><td>출처 표기 정정<br>(원본과 구성이 같다는 점 명시)</td></tr>
 <tr><td>0.1.0</td><td>2026&#8209;11&#8209;11</td><td>첫 공개 릴리스</td></tr>
 </tbody>
 </table>
+
+</div>
 
 전체 내용은 [CHANGELOG.md](CHANGELOG.md)를 보세요.
 
