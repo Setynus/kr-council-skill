@@ -76,15 +76,15 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 <table width="100%">
 <thead>
 <tr>
-<th width="12%" align="center">방식</th>
-<th width="30%" align="center">언제</th>
-<th width="58%" align="center">비용·독립성</th>
+<th width="20%" align="center">방식</th>
+<th width="28%" align="center">언제</th>
+<th width="52%" align="center">비용·독립성</th>
 </tr>
 </thead>
 <tbody>
 <tr><td>병렬</td><td>Agent 도구가 있을 때(Claude Code)</td><td>하위 호출 11개(자문 5 + 검토 5 + 위원장 1), 독립성 높음</td></tr>
-<tr><td>프롬프트 묶음</td><td>Agent 도구가 없고 진짜 독립을 원할 때</td><td>사용자가 새 대화 10개를 직접 열어 결과를 붙여 넣음, 독립성 높음</td></tr>
-<tr><td>단일 세션</td><td>그 외</td><td>한 대화에서 차례로 진행, 빠르지만 독립성 낮음(신뢰도를 낮춤)</td></tr>
+<tr><td>프롬프트&nbsp;묶음</td><td>Agent 도구가 없고 진짜 독립을 원할 때</td><td>사용자가 새 대화 10개를 직접 열어 결과를 붙여 넣음, 독립성 높음</td></tr>
+<tr><td>단일&nbsp;세션</td><td>그 외</td><td>한 대화에서 차례로 진행, 빠르지만 독립성 낮음(신뢰도를 낮춤)</td></tr>
 </tbody>
 </table>
 
@@ -98,12 +98,21 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 - **Windows 한글**: 스크립트는 UTF-8로 읽고 씁니다. 깨져 보이면 터미널 인코딩을 확인하세요.
 
 ## 구성
-```
-kr-council-skill/     스킬 본체(SKILL.md, scripts/, assets/, references/, evals/)
-tests/  tools/        개발용 테스트와 도구  (python -m unittest discover tests)
-comparison/           다른 위원회 스킬과의 블라인드 비교 질문·기준선·결과
-docs/                 설계서, 릴리스 점검 목록
-```
+
+<table width="100%">
+<thead>
+<tr>
+<th width="30%" align="center">경로</th>
+<th width="70%" align="center">내용</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><code>kr-council-skill/</code></td><td>스킬 본체(SKILL.md, scripts/, assets/, references/, evals/)</td></tr>
+<tr><td><code>tests/</code>, <code>tools/</code></td><td>개발용 테스트와 도구 (<code>python -m unittest discover tests</code>)</td></tr>
+<tr><td><code>comparison/</code></td><td>다른 위원회 스킬과의 블라인드 비교 질문·기준선·결과</td></tr>
+<tr><td><code>docs/</code></td><td>설계서, 릴리스 점검 목록</td></tr>
+</tbody>
+</table>
 
 ## 검증 결과 요약
 - 단위 테스트 70여 개(`python -m unittest discover tests`).
@@ -115,15 +124,15 @@ docs/                 설계서, 릴리스 점검 목록
 <table width="100%">
 <thead>
 <tr>
-<th width="10%" align="center">버전</th>
-<th width="17%" align="center">날짜</th>
-<th width="73%" align="center">핵심 변경</th>
+<th width="12%" align="center">버전</th>
+<th width="20%" align="center">날짜</th>
+<th width="68%" align="center">핵심 변경</th>
 </tr>
 </thead>
 <tbody>
-<tr><td>0.2.0</td><td>2026-11-11</td><td>렌더러 입력 검증 강화, JSON 시각별 저장, 프로젝트 문서·CI 정비</td></tr>
-<tr><td>0.1.1</td><td>2026-11-11</td><td>출처 표기 정정(원본과 구성이 같다는 점 명시)</td></tr>
-<tr><td>0.1.0</td><td>2026-11-11</td><td>첫 공개 릴리스</td></tr>
+<tr><td>0.2.0</td><td>2026&#8209;11&#8209;11</td><td>렌더러 입력 검증 강화, JSON 시각별 저장, 프로젝트 문서·CI 정비</td></tr>
+<tr><td>0.1.1</td><td>2026&#8209;11&#8209;11</td><td>출처 표기 정정(원본과 구성이 같다는 점 명시)</td></tr>
+<tr><td>0.1.0</td><td>2026&#8209;11&#8209;11</td><td>첫 공개 릴리스</td></tr>
 </tbody>
 </table>
 
