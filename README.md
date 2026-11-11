@@ -82,14 +82,14 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 <table width="100%">
 <thead>
 <tr>
-<th width="20%" align="center">방식<br><img src="docs/spacer.png" width="88" height="1" align="left" alt=""></th>
+<th width="20%" align="center">방식<br><img src="docs/spacer.png" width="244" height="1" align="left" alt=""></th>
 <th width="28%" align="center">언제</th>
 <th width="52%" align="center">비용·독립성</th>
 </tr>
 </thead>
 <tbody>
 <tr><td>병렬</td><td>Agent 도구가 있을 때<br>(Claude Code)</td><td>하위 호출 11개(자문 5 + 검토 5 + 위원장 1),<br>독립성 높음</td></tr>
-<tr><td>프롬프트&nbsp;묶음</td><td>Agent 도구가 없고 진짜 독립을 원할 때</td><td>사용자가 새 대화 10개를 직접 열어 결과를 붙여 넣음,<br>독립성 높음</td></tr>
+<tr><td>프롬프트&nbsp;묶음</td><td>Agent 도구가 없고<br>진짜 독립을 원할 때</td><td>사용자가 새 대화 10개를 직접 열어<br>결과를 붙여 넣음,<br>독립성 높음</td></tr>
 <tr><td>단일&nbsp;세션</td><td>그 외</td><td>한 대화에서 차례로 진행, 빠르지만 독립성 낮음<br>(신뢰도를 낮춤)</td></tr>
 </tbody>
 </table>
