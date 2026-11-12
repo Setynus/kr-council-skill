@@ -175,7 +175,7 @@ def _verdict(data):
     bullets = lambda items: "<ul>" + "".join(f"<li>{_e(i)}</li>" for i in items) + "</ul>"
     clash = "<ul>" + "".join(f'<li><strong>{_e(c["point"])}</strong> — {_e(c["sides"])}</li>'
                              for c in v["clash"]) + "</ul>"
-    minority = "소수 의견 유지됨" if v["minority_kept"] else "소수 의견 반영 안 됨"
+    minority = "소수 의견 유지됨" if v["minority_kept"] else "소수 의견 없음"
     return (
         f'    <div class="chips"><span>신뢰도: {_e(v["confidence"])}</span><span>{minority}</span></div>\n'
         f'    <h3>위원회가 동의하는 점</h3>{bullets(v["agree"])}\n'

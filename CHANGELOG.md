@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-12
+
+### 변경
+- 상호 검토에서 "약한 응답"의 기준을 모든 응답에 똑같이 적용하도록 했습니다. 입장을 보류했다거나 전문 지식이 없다고 밝혔다는 것만으로는 약하다고 하지 않고, 놓친 구체적 내용을 적게 합니다. 아웃사이더 위원이 역할 때문에 최약으로 꼽히던 문제(두 번의 실행에서 3/5, 5/5)를 줄이려는 것입니다. 위원 정의의 아웃사이더 절에도 "입장 없이 끝내기"를 하지 말라고 적었습니다.
+- `minority_kept`의 정의(최종 권고와 다른 입장을 낸 위원이 있고 그 의견을 남겼을 때만 true, 전원이 같은 방향이면 false)와 위원장 응답 틀을 SKILL.md에 고정했습니다. 프롬프트에 예시값을 넣어 전원 합의에서도 true가 나오던 문제를 막습니다. 보고서의 false 표기는 "소수 의견 반영 안 됨"에서 "소수 의견 없음"으로 바꿨습니다.
+- 새 세션 실사용 테스트에서 잘린 검토를 이어 붙여 위원장 호출과 첫 보고서까지 간 뒤에야 재호출한 문제를 막으려고, 다음 단계로 가기 전에 도착한 답이 모두 끝까지 닫힌 JSON인지 확인하도록 했습니다.
+- 하위 에이전트가 보고 JSON의 맨 끝 `"}`를 스스로 빠뜨려 잘린 답을 내는 사례(두 번의 실행에서 각 1건)가 있어, 닫는 따옴표와 중괄호까지 쓰라고 프롬프트에 넣게 했습니다. 원인은 전달이 아니라 하위 에이전트의 출력 누락입니다.
+- 검토 호출 5개가 한 응답에 묶이지 않고 1개와 4개로 나뉜 사례(원인 미확인)에 대비해, 나뉘면 위반임을 적고 5개가 모두 나가기 전에는 결과를 읽지 않도록 했습니다.
+
 ## [0.2.1] - 2026-11-12
 
 ### 변경
@@ -38,7 +47,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.1.1

@@ -147,6 +147,24 @@ class SkillMdTests(unittest.TestCase):
             self.assertIn("한국어", section)
             self.assertIn("재호출 규칙", section)
 
+    def test_critical_section_requires_complete_json_before_next_step_and_unsplit_review_batch(self):
+        section = self.body.split("## 중요", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("끝이 닫힌 완결된 JSON", section)
+        self.assertIn("council.json", section)
+        self.assertIn("직접 이어 붙여 쓰지 않는다", section)
+        self.assertIn("5개가 모두 나가기 전에는 어떤 결과도 읽지 않는다", section)
+        self.assertIn("닫는 따옴표와 중괄호까지 써서 끝내라고", self.body)
+
+    def test_review_weakness_criterion_and_minority_definition(self):
+        review = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        self.assertIn("모든 응답에 똑같이 적용", review)
+        self.assertIn("구체적 내용", review)
+        chair = self.body.split("## 4단계", 1)[1].split("## 5단계", 1)[0]
+        self.assertIn("전원이 같은 방향이면 false", chair)
+        self.assertIn("예시값을 적어 넣지 않는다", chair)
+        advisors_md = (SKILL_DIR / "references" / "advisors.md").read_text(encoding="utf-8")
+        self.assertIn("입장 없이 끝내기", advisors_md)
+
     def test_timestamp_command_works_in_any_shell(self):
         section = self.body.split("## 5단계", 1)[1]
         self.assertIn("python -c", section)
