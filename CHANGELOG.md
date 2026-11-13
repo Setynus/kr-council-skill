@@ -4,6 +4,27 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-13
+
+### 추가
+- `render_report.py check <advisor|review|verdict> <파일|->`: 하위 에이전트의 답 원문이 끝까지 닫힌 JSON이고 규격(근거 3개, 글자 A~E, 신뢰도 등)에 맞는지 파서로 확인합니다. 통과하면 종료 코드 0, 아니면 2입니다.
+- `render_report.py assemble <raw폴더> --out <council.json>`: 원문 파일 11개(`meta.json`, `advisor-<id>.json` 5개, `review-<id>.json` 5개, `verdict.json`)로 `council.json`을 조립합니다. 문장은 파일에서 그대로 옮기고, 닫히지 않은 파일이나 빠진 파일이 있으면 파일 이름을 알리고 아무것도 만들지 않습니다.
+- 병렬 방식에서 하위 에이전트가 자기 답을 `council-reports/raw-YYYYMMDD-HHMM/`에 Write 도구로 직접 저장합니다. 저장이 막히면 받은 답 원문을 같은 이름으로 저장합니다.
+
+### 변경
+- 답이 "닫혔다"는 판정을 눈으로 하지 않고 `check`의 종료 코드로 합니다. 2026-11-13 실행에서 닫는 따옴표가 빠진 검토와 닫는 따옴표 자리에 이스케이프된 따옴표가 온 검토를 눈으로 닫힌 답이라고 잘못 판정했고, 같은 종류의 사고가 0.2.x 점검 기록에도 있었습니다. 실제로 나온 끝 형태 네 가지를 테스트 픽스처로 고정했습니다.
+- `council.json`을 손으로 옮겨 쓰다 원문과 다른 문장이 들어간 사례(같은 실행)를 막으려고, 조립을 `assemble`로 하고 손으로 쓰는 경우는 폴백으로 남겼습니다.
+- 비용 안내에 재호출 한 건마다 하위 호출이 1개씩 더 든다는 점을 넣었습니다(11개로 알렸는데 실제로 12개였던 사례).
+- 재호출이 두 번 실패한 뒤 사용자가 닫는 괄호만 보정하기로 승인하면, 보정한 위원·검토와 건수를 보고서 제목에 적어 드러냅니다.
+- 작업 폴더는 시작할 때 정한 곳을 끝까지 쓰고, 끝에 HTML의 절대 경로를 알립니다.
+- 위원 호칭 표를 렌더러가 갖고 있고, SKILL.md의 표와 같은지 테스트합니다.
+
+### 알려진 한계
+- 하위 에이전트가 닫는 따옴표·괄호를 빠뜨리는 원인은 확인하지 못했습니다. 이 변경이 보장하는 것은 탐지가 기계적이 된다는 점까지이고, 재호출은 앞으로도 생길 수 있습니다. 저장 방식(Write 도구)이 끝 형태를 고치는지는 한 환경에서 두 번 시험해 두 번 통과한 것이 전부입니다.
+- 검토 프롬프트에 익명 응답 원문 5개를 붙여 넣는 복사는 여전히 손으로 합니다. `assemble`이 없애는 것은 `council.json` 조립 단계의 복사뿐입니다.
+- 위원장·검토·위원이 같은 폴더에 저장하므로, 하위 에이전트가 다른 파일을 읽지 않는다는 점은 프롬프트 지시에만 기댑니다. 독립성은 지시로 지킬 뿐 기술적으로 막지 않습니다.
+- 프롬프트 묶음·단일 세션·코드 실행 불가 환경에서 새 절차를 실제로 돌려 보지는 않았습니다.
+
 ## [0.2.2] - 2026-11-12
 
 ### 변경
@@ -47,7 +68,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.0
 [0.2.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.0

@@ -213,6 +213,40 @@ class SkillMdTests(unittest.TestCase):
         section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
         self.assertIn("python3", section)
 
+    def test_closure_is_decided_by_check_not_by_eye(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("render_report.py", section)
+        self.assertIn("check", section)
+        self.assertIn("눈으로 보고 판정하지 않는다", section)
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        for kind in ("check advisor", "check review", "check verdict"):
+            self.assertIn(kind, step2)
+
+    def test_cost_notice_counts_retries(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("재호출", section.split("비용을 먼저 알린다", 1)[1].split("\n", 1)[0])
+
+    def test_subagents_save_raw_answers_to_files(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        for needle in ("raw-YYYYMMDD-HHMM", "advisor-<id>.json", "review-<id>.json", "verdict.json",
+                       "Write 도구", "다른 파일은 읽지 않는다", "저장이 막히면"):
+            self.assertIn(needle, step2)
+
+    def test_report_step_assembles_from_raw_files_and_keeps_manual_fallback(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("render_report.py\" assemble", step5)
+        self.assertIn("meta.json", step5)
+        self.assertIn("고치지 않고 그대로", step5)
+
+    def test_approved_repair_is_disclosed_in_title(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("title", step2)
+        self.assertIn("보정", step2)
+
+    def test_final_message_gives_absolute_report_path(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("절대 경로", step5)
+
 
 if __name__ == "__main__":
     unittest.main()
