@@ -12,7 +12,8 @@ SCRIPT = ROOT / "kr-council-skill" / "scripts" / "render_report.py"
 TEMPLATE = (ROOT / "kr-council-skill" / "assets" / "report.html")
 sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
-from render_report import ADVISOR_IDS, make_mapping, render, validate  # noqa: E402
+from render_report import (  # noqa: E402
+    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, make_mapping, render, validate)
 
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
@@ -204,6 +205,21 @@ class RenderTests(unittest.TestCase):
     def test_review_table_shows_advisor_names_not_only_letters(self):
         html = render(sample(), template())
         self.assertIn("화가 스머프(확장가)", html.split("상호 검토", 1)[1])
+
+
+class ProfileTests(unittest.TestCase):
+    def test_advisor_names_derived_from_profile(self):
+        self.assertEqual(set(ADVISOR_PROFILE), set(ADVISOR_IDS))
+        self.assertEqual(ADVISOR_NAMES, NAMES)
+
+    def test_blurbs_are_sentences_from_advisors_md(self):
+        advisors_md = (ROOT / "kr-council-skill" / "references" / "advisors.md").read_text(encoding="utf-8")
+        for advisor_id, profile in ADVISOR_PROFILE.items():
+            self.assertIn(profile["blurb"], advisors_md, advisor_id)
+
+    def test_chair_name_comes_from_constant(self):
+        self.assertIn(CHAIR_NAME, render(sample(), template()))
+        self.assertNotIn("파파스머프", template())
 
 
 class CliTests(unittest.TestCase):

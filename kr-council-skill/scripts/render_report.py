@@ -141,14 +141,23 @@ def repair_ending(kind, text):
     return next((c for c in candidates if not check_answer(kind, c)), None)
 
 
-# 보고서 카드에 쓰는 위원 호칭. SKILL.md의 위원 이름 표와 같아야 한다(테스트가 비교한다).
-ADVISOR_NAMES = {
-    "contrarian": "투덜이 스머프(반대자)",
-    "first_principles": "똘똘이 스머프(본질 탐구자)",
-    "expansionist": "화가 스머프(확장가)",
-    "outsider": "덜렁이 스머프(아웃사이더)",
-    "executor": "재주꾼 스머프(실행가)",
+CHAIR_NAME = "파파스머프"  # 위원장 호칭. 템플릿에는 박지 않고 슬롯으로 넣는다.
+
+# 위원 프로필 단일 표. nick+role은 SKILL.md의 위원 이름 표와 같아야 하고, blurb는
+# references/advisors.md의 "관점" 문장 일부여야 한다(둘 다 테스트가 비교한다).
+ADVISOR_PROFILE = {
+    "contrarian": {"nick": "투덜이 스머프", "role": "반대자",
+                   "blurb": "이 선택이 실패한다면 가장 그럴듯한 이유가 무엇인지 찾는다"},
+    "first_principles": {"nick": "똘똘이 스머프", "role": "본질 탐구자",
+                         "blurb": "질문 뒤에 있는 진짜 목적을 묻는다"},
+    "expansionist": {"nick": "화가 스머프", "role": "확장가",
+                     "blurb": "다른 위원이 놓친 상승 여력과 인접 기회를 찾는다"},
+    "outsider": {"nick": "덜렁이 스머프", "role": "아웃사이더",
+                 "blurb": "배경지식이 전혀 없는 사람처럼, 눈앞의 내용만으로 반응한다"},
+    "executor": {"nick": "재주꾼 스머프", "role": "실행가",
+                 "blurb": "이것이 실제로 가능한지, 가장 빠른 길이 무엇인지만 본다"},
 }
+ADVISOR_NAMES = {i: f"{p['nick']}({p['role']})" for i, p in ADVISOR_PROFILE.items()}
 
 
 def assemble(raw_dir):
@@ -319,6 +328,7 @@ def render(data, template):
     slots = {
         "TITLE": _e(data["title"]), "CREATED": _e(data["created"]),
         "MODE_BANNER": _e(MODE_BANNERS[data["mode"]]), "DISCLAIMER": _e(DISCLAIMER),
+        "CHAIR_NAME": _e(CHAIR_NAME),
         "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data),
         "REVIEW_TABLE": _review_table(data), "VERDICT": _verdict(data),
     }
