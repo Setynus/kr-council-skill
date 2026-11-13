@@ -105,7 +105,7 @@ def check_answer(kind, text):
     try:
         obj = json.loads(text)
     except json.JSONDecodeError as exc:
-        return [f"JSON이 끝까지 닫히지 않았거나 깨졌습니다({exc}). 직접 고치지 말고 재호출 규칙대로 다시 받으세요"]
+        return [f"JSON이 끝까지 닫히지 않았거나 깨졌습니다({exc}). 직접 고치지 마세요. 첫 불량이면 같은 프롬프트로 한 번 재호출하고, 재호출 답도 불량이면 repair로 끝 경계를 보정합니다(SKILL.md 2단계)"]
     if not isinstance(obj, dict):
         return ["최상위 값이 객체(dict)가 아닙니다"]
     errors = []  # 규격 밖 필드는 재호출 사유가 아니다(비용만 늘어난다). assemble이 버린다.

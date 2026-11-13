@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-13
+
+### 변경
+- `check`가 JSON을 읽지 못할 때 내는 오류 문장을 0.3.1의 정책에 맞췄습니다. 전에는 "직접 고치지 말고 재호출 규칙대로 다시 받으세요"라고만 안내해, 재호출 답도 불량일 때 `repair`를 돌리라는 SKILL.md와 엇갈렸습니다. 이제 "첫 불량이면 한 번 재호출하고, 재호출 답도 불량이면 `repair`로 끝 경계를 보정한다"고 안내합니다. 동작은 바뀌지 않고 안내 문장만 바뀝니다.
+
+### 알려진 한계
+- 0.3.1의 한계와 미검증 항목이 그대로입니다. 바뀐 문장은 단위 테스트로 확인했을 뿐, 실제 하위 에이전트의 불량 답으로 `repair`까지 가는 판은 돌려 보지 못했습니다.
+
 ## [0.3.1] - 2026-11-13
 
 ### 추가
@@ -86,7 +94,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.0
 [0.2.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.2
