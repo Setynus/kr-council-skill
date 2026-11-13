@@ -207,6 +207,36 @@ class RenderTests(unittest.TestCase):
         self.assertIn("화가 스머프(확장가)", html.split("상호 검토", 1)[1])
 
 
+class DashboardStructureTests(unittest.TestCase):
+    def test_mini_cards_one_per_advisor_with_blurb(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count('class="advisor-mini"'), 5)
+        self.assertEqual(html.count('class="advisor-card"'), 5)
+        for advisor_id, profile in ADVISOR_PROFILE.items():
+            self.assertIn(f'href="#advisor-{advisor_id}"', html)
+            self.assertIn(profile["blurb"], html)
+
+    def test_detail_panels_have_anchor_ids(self):
+        html = render(sample(), template())
+        for advisor_id in ADVISOR_IDS:
+            self.assertIn(f'id="advisor-{advisor_id}"', html)
+
+    def test_mini_cards_escape_advisor_name(self):
+        d = sample()
+        d["advisors"][0]["name"] = "<script>alert(1)</script>{{ADVISOR_CARDS}}"
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertEqual(html.count('class="advisor-card"'), 5)
+        self.assertEqual(html.count('class="advisor-mini"'), 5)
+
+    def test_sections_order(self):
+        html = render(sample(), template())
+        positions = [html.index(f'id="{name}"') for name in ("question", "report", "advisors", "affinity", "reviews")]
+        self.assertEqual(positions, sorted(positions))
+
+
 class ProfileTests(unittest.TestCase):
     def test_advisor_names_derived_from_profile(self):
         self.assertEqual(set(ADVISOR_PROFILE), set(ADVISOR_IDS))

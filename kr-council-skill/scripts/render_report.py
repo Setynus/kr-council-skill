@@ -276,13 +276,26 @@ def _cards(data):
     for adv in data["advisors"]:
         reasons = "".join(f"<li>{_e(r)}</li>" for r in adv["reasons"])
         out.append(
-            f'    <article class="advisor-card" data-advisor="{_e(adv["id"])}">\n'
+            f'    <article class="advisor-card" id="advisor-{_e(adv["id"])}" data-advisor="{_e(adv["id"])}">\n'
             f'      <h3>{_e(adv["name"])}</h3>\n'
             f'      <p class="position">{_e(adv["position"])}</p>\n'
             f'      <ol>{reasons}</ol>\n'
             f'      <p><span class="label">위험</span>{_e(adv["risk"])}</p>\n'
             f'      <p><span class="label">놓치기 쉬운 점</span>{_e(adv["blindspot"])}</p>\n'
             f'    </article>')
+    return "\n".join(out)
+
+
+def _mini_cards(data):
+    """위원 소형 카드. 각 카드는 상세 패널(#advisor-<id>)로 가는 앵커다(JS가 없어도 점프한다)."""
+    out = []
+    for adv in data["advisors"]:
+        advisor_id = _e(adv["id"])
+        out.append(
+            f'    <a class="advisor-mini" href="#advisor-{advisor_id}" data-advisor="{advisor_id}">\n'
+            f'      <strong>{_e(adv["name"])}</strong>\n'
+            f'      <span>{_e(ADVISOR_PROFILE[adv["id"]]["blurb"])}</span>\n'
+            f'    </a>')
     return "\n".join(out)
 
 
@@ -329,7 +342,7 @@ def render(data, template):
         "TITLE": _e(data["title"]), "CREATED": _e(data["created"]),
         "MODE_BANNER": _e(MODE_BANNERS[data["mode"]]), "DISCLAIMER": _e(DISCLAIMER),
         "CHAIR_NAME": _e(CHAIR_NAME),
-        "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data),
+        "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
         "REVIEW_TABLE": _review_table(data), "VERDICT": _verdict(data),
     }
     # 한 번의 치환으로 끝낸다. 값 안의 '{{...}}'가 다시 치환되지 않게 하기 위해서다.

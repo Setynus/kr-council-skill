@@ -29,6 +29,10 @@ h3 { font-size: 1.05rem; margin: 0 0 6px; color: var(--accent); }
 .advisor-card .position { font-weight: 700; margin: 0 0 8px; }
 .advisor-card ol { margin: 0 0 8px; padding-left: 20px; }
 .advisor-card p { margin: 6px 0; }
+.mini-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.advisor-mini { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; color: inherit; text-decoration: none; }
+.advisor-mini strong { display: block; color: var(--accent); }
+.advisor-mini span { display: block; font-size: .88rem; color: var(--muted); }
 .label { color: var(--muted); font-size: .85rem; font-weight: 700; margin-right: 4px; }
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; background: var(--panel); font-size: .92rem; }
@@ -51,23 +55,41 @@ th { background: var(--note-bg); }
   <div class="banner">{{MODE_BANNER}}</div>
   <div class="disclaimer">{{DISCLAIMER}}</div>
 
-  <h2>질문</h2>
-  <div class="question">{{QUESTION}}</div>
+  <section id="question">
+    <h2>질문</h2>
+    <div class="question">{{QUESTION}}</div>
+  </section>
 
-  <h2>위원 5명의 판단</h2>
-  <div class="grid">
-{{ADVISOR_CARDS}}
-  </div>
-
-  <h2>상호 검토 결과</h2>
-  <div class="table-wrap">
-{{REVIEW_TABLE}}
-  </div>
-
-  <h2>{{CHAIR_NAME}}(위원장)의 최종 검토 보고서</h2>
-  <div class="verdict">
+  <section class="verdict hero" id="report">
+    <h2>{{CHAIR_NAME}}(위원장)의 최종 검토 보고서</h2>
+    <div class="pane pane-report" data-pane="report">
 {{VERDICT}}
-  </div>
+    </div>
+    <div class="pane pane-advisors" data-pane="advisors">
+      <h3>위원 5명의 판단</h3>
+      <div class="grid">
+{{ADVISOR_CARDS}}
+      </div>
+    </div>
+  </section>
+
+  <section id="advisors">
+    <h2>위원 5명</h2>
+    <div class="mini-grid">
+{{MINI_CARDS}}
+    </div>
+  </section>
+
+  <section id="affinity">
+    <h2>상성 지도</h2>
+  </section>
+
+  <section id="reviews">
+    <h2>상호 검토 결과</h2>
+    <div class="table-wrap">
+{{REVIEW_TABLE}}
+    </div>
+  </section>
 </main>
 </body>
 </html>
