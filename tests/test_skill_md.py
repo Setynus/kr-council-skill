@@ -267,10 +267,13 @@ class SkillMdTests(unittest.TestCase):
         self.assertIn("meta.json", step5)
         self.assertIn("고치지 않고 그대로", step5)
 
-    def test_approved_repair_is_disclosed_in_title(self):
+    def test_second_failure_is_auto_repaired_by_script_and_disclosed(self):
         step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
-        self.assertIn("title", step2)
-        self.assertIn("보정", step2)
+        self.assertIn("repair <advisor|review|verdict>", step2)
+        self.assertIn("사용자에게 묻지 않고", step2)
+        self.assertIn("before-repair", step2)
+        self.assertIn("손으로 고치거나", step2)
+        self.assertIn("거부하면", step2)  # 보정이 안 되는 실패는 계속 묻는다
 
     def test_final_message_gives_absolute_report_path(self):
         step5 = self.body.split("## 5단계", 1)[1]

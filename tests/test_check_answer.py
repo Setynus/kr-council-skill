@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "kr-council-skill" / "scripts" / "render_report.py"
 sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
-from render_report import check_answer  # noqa: E402
+from render_report import check_answer, repair_ending  # noqa: E402
 
 ADVISOR = {"position": "병행이 맞습니다.", "reasons": ["근거1", "근거2", "근거3"],
            "risk": "위험", "blindspot": "놓친 점"}
@@ -57,6 +57,36 @@ class EndShapes(unittest.TestCase):
 
     def test_brace_only_missing_fails(self):
         self.assertTrue(check_answer("review", dumped(REVIEW)[:-1]))
+
+
+class Repair(unittest.TestCase):
+    """끝 경계만 보정한다. 실제로 나온 불량 두 형태는 보정되고, 정상·내용 손상은 건드리지 않는다."""
+
+    def test_valid_answers_are_left_alone(self):
+        self.assertIsNone(repair_ending("review", dumped(REVIEW)))
+        self.assertIsNone(repair_ending("review", dumped(REVIEW) + "\n"))
+
+    def test_missing_closing_quote_and_brace_is_repaired_without_touching_content(self):
+        broken = dumped(REVIEW)[:-2]
+        fixed = repair_ending("review", broken)
+        self.assertEqual(json.loads(fixed), REVIEW)
+        self.assertTrue(fixed.startswith(broken))  # 덧붙이기만 했다
+
+    def test_escaped_quote_then_brace_is_repaired(self):
+        broken = dumped(REVIEW)[:-2] + '\\"}'
+        self.assertEqual(json.loads(repair_ending("review", broken)), REVIEW)
+
+    def test_brace_only_missing_is_repaired(self):
+        self.assertEqual(json.loads(repair_ending("review", dumped(REVIEW)[:-1])), REVIEW)
+
+    def test_verdict_missing_final_brace_is_repaired(self):
+        self.assertEqual(json.loads(repair_ending("verdict", dumped(VERDICT)[:-1])), VERDICT)
+
+    def test_damage_outside_the_ending_is_refused(self):
+        self.assertIsNone(repair_ending("review", dumped(REVIEW)[:30]))  # 중간에서 끊김
+        self.assertIsNone(repair_ending("review", "JSON이 아닙니다"))
+        two_reasons = dict(ADVISOR, reasons=["근거1", "근거2"])
+        self.assertIsNone(repair_ending("advisor", dumped(two_reasons)[:-2]))  # 끝을 닫아도 규격 위반
 
 
 class Fields(unittest.TestCase):

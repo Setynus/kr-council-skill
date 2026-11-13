@@ -120,6 +120,27 @@ def check_answer(kind, text):
     return errors
 
 
+REPAIRED_SUFFIX = ".before-repair.json"  # 보정 전 원본을 남기는 파일 이름 꼬리
+
+
+def repair_ending(kind, text):
+    """답의 맨 끝 경계(닫는 따옴표·중괄호)만 보정한 문자열을 돌려준다. 보정할 수 없으면 None.
+
+    내용은 한 글자도 고치지 않고 끝에서 `\\"}`를 `"}`로 바꾸거나 `"}`·`}`를 덧붙인다.
+    보정본이 check_answer를 통과해야만 채택한다. 이미 통과하는 답은 손대지 않는다(None).
+    shortcut: 끝만 빠진 답과 내용이 잘린 답을 구별하지 못한다. 잘린 문장이 닫혀 통과할 수 있다.
+    """
+    if not check_answer(kind, text):
+        return None
+    body = text.rstrip()
+    candidates = []
+    for bad in ('\\"}', '\\"'):
+        if body.endswith(bad):
+            candidates.append(body[:-len(bad)] + '"}')
+    candidates += [body + '"}', body + "}"]
+    return next((c for c in candidates if not check_answer(kind, c)), None)
+
+
 # 보고서 카드에 쓰는 위원 호칭. SKILL.md의 위원 이름 표와 같아야 한다(테스트가 비교한다).
 ADVISOR_NAMES = {
     "contrarian": "투덜이 스머프(반대자)",
@@ -171,6 +192,9 @@ def assemble(raw_dir):
     if errors:
         return None, errors
     data = dict(meta)
+    repaired = sorted(p.relative_to(raw).as_posix().removesuffix(REPAIRED_SUFFIX) for p in raw.rglob("*" + REPAIRED_SUFFIX))
+    if repaired and isinstance(data.get("title"), str):  # 보정은 보고서 제목에 드러낸다
+        data["title"] += f" [끝 경계 자동 보정 {len(repaired)}건: {', '.join(repaired)}]"
     data["advisors"] = [{"id": i, "name": ADVISOR_NAMES[i], **keep(a, "advisor")}
                         for i, a in zip(ADVISOR_IDS, advisors)]
     data["reviews"] = [{"reviewer": i, **keep(r, "review")} for i, r in zip(ADVISOR_IDS, reviews)]
@@ -317,6 +341,9 @@ def _main(argv=None):
     chk = sub.add_parser("check", help="하위 에이전트의 답 원문이 끝까지 닫힌 JSON인지 확인")
     chk.add_argument("kind", choices=tuple(ANSWER_FIELDS))
     chk.add_argument("path", help="답을 저장한 파일. 표준 입력이면 -")
+    rep = sub.add_parser("repair", help="check를 통과하지 못한 답의 끝 경계만 보정(원본은 .before-repair.json로 보존)")
+    rep.add_argument("kind", choices=tuple(ANSWER_FIELDS))
+    rep.add_argument("path")
     asm = sub.add_parser("assemble", help="meta.json과 답 파일 11개로 council.json을 조립")
     asm.add_argument("raw_dir")
     asm.add_argument("--out", required=True)
@@ -331,6 +358,17 @@ def _main(argv=None):
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"저장했습니다: {out}")
+        return 0
+    if args.cmd == "repair":
+        path = Path(args.path)
+        text = path.read_bytes().decode("utf-8", errors="replace")
+        fixed = repair_ending(args.kind, text)
+        if fixed is None:
+            print("끝 경계만으로는 보정할 수 없습니다(이미 통과했거나 내용이 깨졌습니다). 사용자에게 알리고 어떻게 할지 묻습니다", file=sys.stderr)
+            return VALIDATION_ERROR_EXIT
+        path.with_name(path.stem + REPAIRED_SUFFIX).write_bytes(text.encode("utf-8"))
+        path.write_text(fixed, encoding="utf-8")
+        print(f"끝 경계를 보정했습니다. 원본: {path.stem}{REPAIRED_SUFFIX}")
         return 0
     if args.cmd == "shuffle":
         print(json.dumps(make_mapping(args.seed), ensure_ascii=False))

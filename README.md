@@ -1,6 +1,6 @@
 # kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
@@ -144,6 +144,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 </tr>
 </thead>
 <tbody>
+<tr><td>0.3.1</td><td>2026&#8209;11&#8209;13</td><td>재호출 1회 뒤<br>끝 경계 자동 보정(repair)</td></tr>
 <tr><td>0.3.0</td><td>2026&#8209;11&#8209;13</td><td>하위 에이전트 답을<br>파서로 확인(check),<br>원문 파일로 조립(assemble)</td></tr>
 <tr><td>0.2.2</td><td>2026&#8209;11&#8209;12</td><td>검토 약점 기준·<br>소수 의견 정의 정비,<br>JSON 잘림 확인</td></tr>
 <tr><td>0.2.1</td><td>2026&#8209;11&#8209;12</td><td>검토·위원장 단계<br>재호출·한국어 지시 추가</td></tr>
