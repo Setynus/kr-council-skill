@@ -238,6 +238,45 @@ class DashboardStructureTests(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
 
 
+class DashboardBehaviorContractTests(unittest.TestCase):
+    """JS 없이도 읽히고, 스크립트에 위원 텍스트가 들어가지 않으며, 외부 리소스가 없다는 계약."""
+
+    @staticmethod
+    def script_blocks(text):
+        return re.findall(r"<script>.*?</script>", text, flags=re.S)
+
+    def test_single_static_script_without_council_text(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count("<script"), 1)
+        self.assertEqual(self.script_blocks(html), self.script_blocks(template()))
+        d = sample()
+        d["question"] = "</script><script>alert(1)</script>"
+        html = render(d, template())
+        self.assertEqual(html.count("<script"), 1)
+        self.assertEqual(self.script_blocks(html), self.script_blocks(template()))
+
+    def test_no_external_resources(self):
+        html = render(sample(), template())
+        self.assertIsNone(re.search(r'(src|href)="https?:|@import|url\(\s*[\'"]?https?:', html))
+
+    def test_no_hidden_content_without_js(self):
+        html = render(sample(), template())
+        self.assertIsNone(re.search(r"<[^>]+\shidden[\s>]", html))
+        self.assertNotIn('style="display:none', html)
+        self.assertIn('class="banner"', html)
+        self.assertIn('class="disclaimer"', html)
+
+    def test_theme_and_print_css_present(self):
+        html = render(sample(), template())
+        for needle in ("prefers-color-scheme: dark", 'data-theme="dark"', 'data-theme="light"',
+                       "prefers-reduced-motion", "@media print"):
+            self.assertIn(needle, html)
+
+    def test_chair_card_comes_before_advisor_minis(self):
+        html = render(sample(), template())
+        self.assertLess(html.index('class="verdict hero"'), html.index('id="advisors"'))
+
+
 LETTER_OF = {v: k for k, v in MAPPING.items()}
 
 
