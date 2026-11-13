@@ -55,6 +55,12 @@ class EndShapes(unittest.TestCase):
         self.assertTrue(errors)
         self.assertIn("JSON", errors[0])
 
+    def test_parse_failure_message_points_to_retry_then_repair(self):
+        message = check_answer("review", dumped(REVIEW)[:-2])[0]
+        self.assertIn("재호출", message)
+        self.assertIn("repair", message)
+        self.assertNotIn("다시 받으세요", message)  # 0.3.0의 옛 안내(재호출만)가 남지 않게
+
     def test_brace_only_missing_fails(self):
         self.assertTrue(check_answer("review", dumped(REVIEW)[:-1]))
 
