@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -12,7 +13,8 @@ SCRIPT = ROOT / "kr-council-skill" / "scripts" / "render_report.py"
 TEMPLATE = (ROOT / "kr-council-skill" / "assets" / "report.html")
 sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
-from render_report import ADVISOR_IDS, make_mapping, render, validate  # noqa: E402
+from render_report import (  # noqa: E402
+    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, _affinity_edges, make_mapping, render, validate)
 
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
@@ -204,6 +206,174 @@ class RenderTests(unittest.TestCase):
     def test_review_table_shows_advisor_names_not_only_letters(self):
         html = render(sample(), template())
         self.assertIn("화가 스머프(확장가)", html.split("상호 검토", 1)[1])
+
+
+class DashboardStructureTests(unittest.TestCase):
+    def test_mini_cards_one_per_advisor_with_blurb(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count('class="advisor-mini"'), 5)
+        self.assertEqual(html.count('class="advisor-card"'), 5)
+        for advisor_id, profile in ADVISOR_PROFILE.items():
+            self.assertIn(f'href="#advisor-{advisor_id}"', html)
+            self.assertIn(profile["blurb"], html)
+
+    def test_detail_panels_have_anchor_ids(self):
+        html = render(sample(), template())
+        for advisor_id in ADVISOR_IDS:
+            self.assertIn(f'id="advisor-{advisor_id}"', html)
+
+    def test_mini_cards_escape_advisor_name(self):
+        d = sample()
+        d["advisors"][0]["name"] = "<script>alert(1)</script>{{ADVISOR_CARDS}}"
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertEqual(html.count('class="advisor-card"'), 5)
+        self.assertEqual(html.count('class="advisor-mini"'), 5)
+
+    def test_sections_order(self):
+        html = render(sample(), template())
+        positions = [html.index(f'id="{name}"') for name in ("question", "report", "advisors", "affinity", "reviews")]
+        self.assertEqual(positions, sorted(positions))
+
+
+class DashboardBehaviorContractTests(unittest.TestCase):
+    """JS 없이도 읽히고, 스크립트에 위원 텍스트가 들어가지 않으며, 외부 리소스가 없다는 계약."""
+
+    @staticmethod
+    def script_blocks(text):
+        return re.findall(r"<script>.*?</script>", text, flags=re.S)
+
+    def test_single_static_script_without_council_text(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count("<script"), 1)
+        self.assertEqual(self.script_blocks(html), self.script_blocks(template()))
+        d = sample()
+        d["question"] = "</script><script>alert(1)</script>"
+        html = render(d, template())
+        self.assertEqual(html.count("<script"), 1)
+        self.assertEqual(self.script_blocks(html), self.script_blocks(template()))
+
+    def test_script_falls_back_to_no_js_layout_when_init_fails(self):
+        """init이 예외를 내면 `js` 클래스를 떼어, CSS로 숨겨 둔 위원 상세가 다시 보이게 한다."""
+        script = self.script_blocks(render(sample(), template()))[0]
+        self.assertRegex(script, r"catch\s*\([^)]*\)\s*\{[^}]*classList\.remove\('js'\)")
+
+    def test_no_external_resources(self):
+        html = render(sample(), template())
+        self.assertIsNone(re.search(r'(src|href)="https?:|@import|url\(\s*[\'"]?https?:', html))
+
+    def test_no_hidden_content_without_js(self):
+        html = render(sample(), template())
+        self.assertIsNone(re.search(r"<[^>]+\shidden[\s>]", html))
+        self.assertNotIn('style="display:none', html)
+        self.assertIn('class="banner"', html)
+        self.assertIn('class="disclaimer"', html)
+
+    def test_theme_and_print_css_present(self):
+        html = render(sample(), template())
+        for needle in ("prefers-color-scheme: dark", 'data-theme="dark"', 'data-theme="light"',
+                       "prefers-reduced-motion", "@media print"):
+            self.assertIn(needle, html)
+
+    def test_chair_card_comes_before_advisor_minis(self):
+        html = render(sample(), template())
+        self.assertLess(html.index('class="verdict hero"'), html.index('id="advisors"'))
+
+
+LETTER_OF = {v: k for k, v in MAPPING.items()}
+
+
+def svg_of(html):
+    return html[html.index("<svg"):html.index("</svg>") + len("</svg>")]
+
+
+class AffinityTests(unittest.TestCase):
+    def test_affinity_edges_has_ten_with_kinds(self):
+        edges = _affinity_edges(sample())
+        self.assertEqual(len(edges), 10)
+        self.assertEqual(sum(e["kind"] == "support" for e in edges), 5)
+        self.assertEqual(sum(e["kind"] == "critique" for e in edges), 5)
+        self.assertFalse(any(e["mutual"] for e in edges))
+
+    def test_affinity_edges_marks_mutual_support(self):
+        d = sample()
+        d["reviews"][1]["strongest"] = LETTER_OF["contrarian"]  # 똘똘이 → 투덜이 (투덜이 → 똘똘이는 기존)
+        self.assertEqual(validate(d), [])
+        mutual = [(e["from"], e["to"]) for e in _affinity_edges(d) if e["mutual"]]
+        self.assertEqual(sorted(mutual), [("contrarian", "first_principles"), ("first_principles", "contrarian")])
+
+    def test_affinity_map_renders_ten_edges_and_legend(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count('class="edge '), 10)
+        critiques = re.findall(r'<[^>]*class="edge critique[^>]*>', html)
+        self.assertEqual(len(critiques), 5)
+        self.assertTrue(all("stroke-dasharray" in c for c in critiques))
+        self.assertIn("점수가 아니라", html)
+
+    def test_opposite_edges_curve_to_opposite_sides(self):
+        """서로 반대 방향인 두 간선(상호 지지 쌍)이 같은 곡선으로 겹쳐 하나로 보이면 안 된다."""
+        d = sample()
+        d["reviews"][1]["strongest"] = LETTER_OF["contrarian"]  # 투덜이 ↔ 똘똘이 상호 지지
+        svg = svg_of(render(d, template()))
+        pattern = (r'data-from="(\w+)" data-to="(\w+)"[^>]*d="M([-\d.]+) ([-\d.]+) '
+                   r'Q([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+)"')
+        paths = {(m[0], m[1]): tuple(map(float, m[2:])) for m in re.findall(pattern, svg)}
+        a_to_b = paths[("contrarian", "first_principles")]
+        b_to_a = paths[("first_principles", "contrarian")]
+        (ax, ay), (bx, by) = a_to_b[0:2], b_to_a[0:2]  # 각 간선의 시작점 근처(노드 중심 근사)
+
+        def side(control):  # 직선 A→B에 대해 제어점이 놓인 쪽(+1/-1)
+            cross = (bx - ax) * (control[1] - ay) - (by - ay) * (control[0] - ax)
+            return 1 if cross > 0 else -1
+
+        self.assertNotEqual(side(a_to_b[2:4]), side(b_to_a[2:4]))
+
+    def test_arrowheads_do_not_scale_with_stroke_width(self):
+        self.assertIn('markerUnits="userSpaceOnUse"', svg_of(render(sample(), template())))
+
+    def test_affinity_map_escapes_labels(self):
+        d = sample()
+        d["advisors"][0]["name"] = "<b>x</b>"
+        svg = svg_of(render(d, template()))
+        self.assertNotIn("<b>x</b>", svg)
+        self.assertIn("&lt;b&gt;x&lt;/b&gt;", svg)
+
+    def test_affinity_map_survives_self_critique(self):
+        d = sample()
+        d["reviews"][0]["weakest"] = LETTER_OF["contrarian"]  # 검토자 본인(투덜이)을 약점으로
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertIn('class="edge critique self"', html)
+        self.assertEqual(html.count('class="edge '), 10)
+
+    def test_affinity_map_hub_target_keeps_all_edges(self):
+        d = sample()
+        for rv in d["reviews"]:
+            rv["strongest"] = LETTER_OF["first_principles"] if rv["reviewer"] != "first_principles" \
+                else LETTER_OF["contrarian"]
+            rv["weakest"] = LETTER_OF["executor"] if rv["strongest"] != LETTER_OF["executor"] \
+                else LETTER_OF["outsider"]
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertEqual(html.count('class="edge '), 10)
+        self.assertEqual(len(_affinity_edges(d)), 10)
+
+
+class ProfileTests(unittest.TestCase):
+    def test_advisor_names_derived_from_profile(self):
+        self.assertEqual(set(ADVISOR_PROFILE), set(ADVISOR_IDS))
+        self.assertEqual(ADVISOR_NAMES, NAMES)
+
+    def test_blurbs_are_sentences_from_advisors_md(self):
+        advisors_md = (ROOT / "kr-council-skill" / "references" / "advisors.md").read_text(encoding="utf-8")
+        for advisor_id, profile in ADVISOR_PROFILE.items():
+            self.assertIn(profile["blurb"], advisors_md, advisor_id)
+
+    def test_chair_name_comes_from_constant(self):
+        self.assertIn(CHAIR_NAME, render(sample(), template()))
+        self.assertNotIn("파파스머프", template())
 
 
 class CliTests(unittest.TestCase):

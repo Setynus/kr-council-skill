@@ -5,6 +5,7 @@
 import argparse
 import html
 import json
+import math
 import random
 import re
 import sys
@@ -141,14 +142,23 @@ def repair_ending(kind, text):
     return next((c for c in candidates if not check_answer(kind, c)), None)
 
 
-# 보고서 카드에 쓰는 위원 호칭. SKILL.md의 위원 이름 표와 같아야 한다(테스트가 비교한다).
-ADVISOR_NAMES = {
-    "contrarian": "투덜이 스머프(반대자)",
-    "first_principles": "똘똘이 스머프(본질 탐구자)",
-    "expansionist": "화가 스머프(확장가)",
-    "outsider": "덜렁이 스머프(아웃사이더)",
-    "executor": "재주꾼 스머프(실행가)",
+CHAIR_NAME = "파파스머프"  # 위원장 호칭. 템플릿에는 박지 않고 슬롯으로 넣는다.
+
+# 위원 프로필 단일 표. nick+role은 SKILL.md의 위원 이름 표와 같아야 하고, blurb는
+# references/advisors.md의 "관점" 문장 일부여야 한다(둘 다 테스트가 비교한다).
+ADVISOR_PROFILE = {
+    "contrarian": {"nick": "투덜이 스머프", "role": "반대자",
+                   "blurb": "이 선택이 실패한다면 가장 그럴듯한 이유가 무엇인지 찾는다"},
+    "first_principles": {"nick": "똘똘이 스머프", "role": "본질 탐구자",
+                         "blurb": "질문 뒤에 있는 진짜 목적을 묻는다"},
+    "expansionist": {"nick": "화가 스머프", "role": "확장가",
+                     "blurb": "다른 위원이 놓친 상승 여력과 인접 기회를 찾는다"},
+    "outsider": {"nick": "덜렁이 스머프", "role": "아웃사이더",
+                 "blurb": "배경지식이 전혀 없는 사람처럼, 눈앞의 내용만으로 반응한다"},
+    "executor": {"nick": "재주꾼 스머프", "role": "실행가",
+                 "blurb": "이것이 실제로 가능한지, 가장 빠른 길이 무엇인지만 본다"},
 }
+ADVISOR_NAMES = {i: f"{p['nick']}({p['role']})" for i, p in ADVISOR_PROFILE.items()}
 
 
 def assemble(raw_dir):
@@ -267,7 +277,7 @@ def _cards(data):
     for adv in data["advisors"]:
         reasons = "".join(f"<li>{_e(r)}</li>" for r in adv["reasons"])
         out.append(
-            f'    <article class="advisor-card" data-advisor="{_e(adv["id"])}">\n'
+            f'    <article class="advisor-card" id="advisor-{_e(adv["id"])}" data-advisor="{_e(adv["id"])}">\n'
             f'      <h3>{_e(adv["name"])}</h3>\n'
             f'      <p class="position">{_e(adv["position"])}</p>\n'
             f'      <ol>{reasons}</ol>\n'
@@ -275,6 +285,95 @@ def _cards(data):
             f'      <p><span class="label">놓치기 쉬운 점</span>{_e(adv["blindspot"])}</p>\n'
             f'    </article>')
     return "\n".join(out)
+
+
+def _mini_cards(data):
+    """위원 소형 카드. 각 카드는 상세 패널(#advisor-<id>)로 가는 앵커다(JS가 없어도 점프한다)."""
+    out = []
+    for adv in data["advisors"]:
+        advisor_id = _e(adv["id"])
+        out.append(
+            f'    <a class="advisor-mini" href="#advisor-{advisor_id}" data-advisor="{advisor_id}">\n'
+            f'      <strong>{_e(adv["name"])}</strong>\n'
+            f'      <span>{_e(ADVISOR_PROFILE[adv["id"]]["blurb"])}</span>\n'
+            f'    </a>')
+    return "\n".join(out)
+
+
+def _affinity_edges(data):
+    """상호 검토 5개에서 방향 간선 10개를 만든다. 검토자 → 가장 강한 응답은 support, → 가장 큰 사각지대는 critique."""
+    mapping = data["mapping"]
+    edges = []
+    for rv in data["reviews"]:
+        edges.append({"from": rv["reviewer"], "to": mapping[rv["strongest"]], "kind": "support", "mutual": False})
+        edges.append({"from": rv["reviewer"], "to": mapping[rv["weakest"]], "kind": "critique", "mutual": False})
+    support = {(e["from"], e["to"]) for e in edges if e["kind"] == "support"}
+    for e in edges:
+        e["mutual"] = e["kind"] == "support" and (e["to"], e["from"]) in support
+    return edges
+
+
+# 상성 지도 도형(SVG viewBox 기준 좌표)
+_MAP_W, _MAP_H, _MAP_CX, _MAP_CY, _MAP_R, _NODE_R = 600, 470, 300, 240, 165, 16
+
+
+def _affinity_map(data):
+    """상성 지도: 위원 5명을 5각형 꼭짓점에 놓고 검토 간선 10개를 그린다. 수치는 만들지 않는다."""
+    names = {a["id"]: a["name"] for a in data["advisors"]}
+    pos, away = {}, {}  # 노드 중심 좌표, 중심에서 바깥으로 향하는 단위 벡터
+    for n, advisor_id in enumerate(ADVISOR_IDS):
+        angle = math.radians(-90 + 72 * n)
+        away[advisor_id] = (math.cos(angle), math.sin(angle))
+        pos[advisor_id] = (_MAP_CX + _MAP_R * away[advisor_id][0], _MAP_CY + _MAP_R * away[advisor_id][1])
+
+    parts = []
+    for e in _affinity_edges(data):
+        classes = f'edge {e["kind"]}' + (" mutual" if e["mutual"] else "") + (" self" if e["from"] == e["to"] else "")
+        common = (f'class="{classes}" data-from="{_e(e["from"])}" data-to="{_e(e["to"])}" fill="none" '
+                  f'stroke-width="{4 if e["mutual"] else 2}"'
+                  + (' stroke-dasharray="6 5"' if e["kind"] == "critique" else ""))
+        if e["from"] == e["to"]:  # 자기 자신을 약점으로 고른 경우: 노드 옆의 작은 고리
+            (x, y), (ax, ay) = pos[e["from"]], away[e["from"]]
+            parts.append(f'    <circle {common} cx="{x - ay * 24:.1f}" cy="{y + ax * 24:.1f}" r="9"/>')
+            continue
+        (x1, y1), (x2, y2) = pos[e["from"]], pos[e["to"]]
+        length = math.hypot(x2 - x1, y2 - y1)
+        ux, uy = (x2 - x1) / length, (y2 - y1) / length
+        sx, sy = x1 + ux * _NODE_R, y1 + uy * _NODE_R
+        ex, ey = x2 - ux * (_NODE_R + 5), y2 - uy * (_NODE_R + 5)
+        # 진행 방향의 같은 쪽으로 휘면, 반대 방향 간선은 (수직 벡터가 뒤집혀) 저절로 반대쪽으로 휘어 겹치지 않는다.
+        bend = 26
+        cx, cy = (sx + ex) / 2 - uy * bend, (sy + ey) / 2 + ux * bend
+        parts.append(f'    <path {common} d="M{sx:.1f} {sy:.1f} Q{cx:.1f} {cy:.1f} {ex:.1f} {ey:.1f}" '
+                     f'marker-end="url(#arrow-{e["kind"]})"/>')
+
+    for advisor_id in ADVISOR_IDS:
+        (x, y), (ax, ay) = pos[advisor_id], away[advisor_id]
+        anchor = "middle" if abs(ax) < 0.3 else ("start" if ax > 0 else "end")
+        parts.append(
+            f'    <g class="node" data-advisor="{_e(advisor_id)}" tabindex="0">\n'
+            f'      <title>{_e(names[advisor_id])}</title>\n'
+            f'      <circle cx="{x:.1f}" cy="{y:.1f}" r="{_NODE_R}"/>\n'
+            f'      <text x="{x + ax * (_NODE_R + 12):.1f}" y="{y + ay * (_NODE_R + 12):.1f}" text-anchor="{anchor}" '
+            f'dominant-baseline="middle">{_e(ADVISOR_PROFILE[advisor_id]["role"])}</text>\n'
+            f'    </g>')
+
+    markers = "".join(
+        f'<marker id="arrow-{kind}" class="arrow {kind}" viewBox="0 0 10 10" refX="9" refY="5" '
+        f'markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">'
+        f'<path d="M0 0 L10 5 L0 10 z"/></marker>'
+        for kind in ("support", "critique"))
+    label = "상성 지도: 위원 5명이 서로의 응답을 검토해 고른 가장 강한 응답(실선)과 가장 큰 사각지대(점선)"
+    return (
+        f'    <div class="affinity-wrap">\n'
+        f'    <svg viewBox="0 0 {_MAP_W} {_MAP_H}" role="img" aria-label="{_e(label)}">\n'
+        f'    <defs>{markers}</defs>\n' + "\n".join(parts) + '\n    </svg>\n    </div>\n'
+        '    <ul class="legend">\n'
+        '      <li><span class="swatch support"></span>실선: 가장 강한 응답으로 지지</li>\n'
+        '      <li><span class="swatch critique"></span>점선: 가장 큰 사각지대로 비판</li>\n'
+        '      <li><span class="swatch mutual"></span>굵은 선: 서로를 지지한 쌍</li>\n'
+        '    </ul>\n'
+        '    <p class="legend-note">선의 굵기는 점수가 아니라 이 질문에서의 검토 결과를 나타냅니다.</p>')
 
 
 def _review_table(data):
@@ -319,7 +418,9 @@ def render(data, template):
     slots = {
         "TITLE": _e(data["title"]), "CREATED": _e(data["created"]),
         "MODE_BANNER": _e(MODE_BANNERS[data["mode"]]), "DISCLAIMER": _e(DISCLAIMER),
-        "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data),
+        "CHAIR_NAME": _e(CHAIR_NAME),
+        "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
+        "AFFINITY_MAP": _affinity_map(data),
         "REVIEW_TABLE": _review_table(data), "VERDICT": _verdict(data),
     }
     # 한 번의 치환으로 끝낸다. 값 안의 '{{...}}'가 다시 치환되지 않게 하기 위해서다.
