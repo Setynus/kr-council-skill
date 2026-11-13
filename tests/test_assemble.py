@@ -57,6 +57,30 @@ class AssembleTests(unittest.TestCase):
         self.addCleanup(self._tmp.cleanup)
         self.raw = Path(self._tmp.name)
 
+    def test_cli_repair_keeps_original_and_assemble_discloses_it_in_title(self):
+        write_raw(self.raw, broken="reviews/C.json")
+        target = self.raw / "reviews" / "C.json"
+        original = target.read_text(encoding="utf-8")
+        run = subprocess.run([sys.executable, str(SCRIPT), "repair", "review", str(target)],
+                             capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertEqual((self.raw / "reviews" / "C.before-repair.json").read_text(encoding="utf-8"), original)
+        data, errors = assemble(self.raw)
+        self.assertEqual(errors, [])
+        self.assertIn("자동 보정 1건", data["title"])
+        self.assertIn("reviews/C", data["title"])
+
+    def test_cli_repair_refuses_content_damage_and_leaves_file_untouched(self):
+        write_raw(self.raw)
+        target = self.raw / "verdict.json"
+        target.write_text(target.read_text(encoding="utf-8")[:20], encoding="utf-8")
+        before = target.read_text(encoding="utf-8")
+        run = subprocess.run([sys.executable, str(SCRIPT), "repair", "verdict", str(target)],
+                             capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(run.returncode, 2)
+        self.assertEqual(target.read_text(encoding="utf-8"), before)
+        self.assertFalse((self.raw / "verdict.before-repair.json").exists())
+
     def test_assembles_valid_council_json_with_verbatim_text(self):
         write_raw(self.raw)
         data, errors = assemble(self.raw)

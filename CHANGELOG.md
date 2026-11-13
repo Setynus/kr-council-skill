@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-13
+
+### 추가
+- `render_report.py repair <advisor|review|verdict> <파일>`: `check`를 통과하지 못한 답의 맨 끝 경계만 보정합니다. 닫는 따옴표·중괄호를 덧붙이거나 `\"}`를 `"}`로 바꾸고, 보정본이 `check`를 통과할 때만 파일을 바꿉니다. 내용은 한 글자도 고치지 않으며, 보정 전 원본은 `<이름>.before-repair.json`으로 남습니다.
+- `assemble`이 `.before-repair.json`이 있으면 보고서 제목에 `[끝 경계 자동 보정 N건: 파일 이름]`을 덧붙여 보정 사실을 드러냅니다.
+
+### 변경
+- 재호출 정책을 정했습니다. 답이 `check`를 통과하지 못하면 같은 프롬프트로 한 번 재호출하고, 그 답도 통과하지 못하면 사용자에게 묻지 않고 `repair`로 끝 경계를 보정합니다(0.3.0은 여기서 사용자에게 물었습니다). 보정은 모델이 손으로 하지 않고 스크립트가 합니다.
+- `repair`가 거부하는 실패(호출 실패, JSON 중간이 깨짐, 근거가 3개가 아님, 필드 빠짐)와 코드를 실행할 수 없는 환경에서는 계속 사용자에게 묻습니다.
+
+### 알려진 한계
+- 보정은 "끝만 빠진 답"과 "내용이 잘린 답"을 구별하지 못합니다. 문장이 중간에서 끊겼는데 그 자리에서 닫혀 통과할 수 있고, `\"}`로 끝난 답은 `"}`가 맞다고 가정합니다(마지막 글자가 실제 따옴표일 수 있습니다). 그래서 제목 공개와 원본 보존을 함께 둡니다.
+- 새 판의 재호출·보정 경로는 단위 테스트(실제로 나온 끝 형태 네 가지 재사용)로만 확인했고, 실제 하위 에이전트의 불량 답으로 `repair`가 돌아가는 판은 돌려 보지 못했습니다. 0.3.0의 미검증 항목(프롬프트 묶음, 단일 세션, 코드 실행 불가 환경, 저장 막힘 폴백, claude.ai zip, Windows 외 OS, HTML 육안 확인, 설치본의 새 세션 실행)도 그대로입니다.
+
 ## [0.3.0] - 2026-11-13
 
 ### 추가
@@ -72,7 +86,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.0
 [0.2.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.2.1
