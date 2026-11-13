@@ -229,7 +229,9 @@ th { background: var(--note-bg); }
     });
   }
 
-  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+  // init이 실패하면 JS 없는 배치로 되돌린다. 위원 상세가 CSS로 숨겨진 채 남지 않게 한다.
+  function safeInit() { try { init(); } catch (e) { root.classList.remove('js'); } }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', safeInit); } else { safeInit(); }
 })();
 </script>
 <header class="site-header">

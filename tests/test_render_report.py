@@ -255,6 +255,11 @@ class DashboardBehaviorContractTests(unittest.TestCase):
         self.assertEqual(html.count("<script"), 1)
         self.assertEqual(self.script_blocks(html), self.script_blocks(template()))
 
+    def test_script_falls_back_to_no_js_layout_when_init_fails(self):
+        """init이 예외를 내면 `js` 클래스를 떼어, CSS로 숨겨 둔 위원 상세가 다시 보이게 한다."""
+        script = self.script_blocks(render(sample(), template()))[0]
+        self.assertRegex(script, r"catch\s*\([^)]*\)\s*\{[^}]*classList\.remove\('js'\)")
+
     def test_no_external_resources(self):
         html = render(sample(), template())
         self.assertIsNone(re.search(r'(src|href)="https?:|@import|url\(\s*[\'"]?https?:', html))
@@ -306,6 +311,27 @@ class AffinityTests(unittest.TestCase):
         self.assertEqual(len(critiques), 5)
         self.assertTrue(all("stroke-dasharray" in c for c in critiques))
         self.assertIn("점수가 아니라", html)
+
+    def test_opposite_edges_curve_to_opposite_sides(self):
+        """서로 반대 방향인 두 간선(상호 지지 쌍)이 같은 곡선으로 겹쳐 하나로 보이면 안 된다."""
+        d = sample()
+        d["reviews"][1]["strongest"] = LETTER_OF["contrarian"]  # 투덜이 ↔ 똘똘이 상호 지지
+        svg = svg_of(render(d, template()))
+        pattern = (r'data-from="(\w+)" data-to="(\w+)"[^>]*d="M([-\d.]+) ([-\d.]+) '
+                   r'Q([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+)"')
+        paths = {(m[0], m[1]): tuple(map(float, m[2:])) for m in re.findall(pattern, svg)}
+        a_to_b = paths[("contrarian", "first_principles")]
+        b_to_a = paths[("first_principles", "contrarian")]
+        (ax, ay), (bx, by) = a_to_b[0:2], b_to_a[0:2]  # 각 간선의 시작점 근처(노드 중심 근사)
+
+        def side(control):  # 직선 A→B에 대해 제어점이 놓인 쪽(+1/-1)
+            cross = (bx - ax) * (control[1] - ay) - (by - ay) * (control[0] - ax)
+            return 1 if cross > 0 else -1
+
+        self.assertNotEqual(side(a_to_b[2:4]), side(b_to_a[2:4]))
+
+    def test_arrowheads_do_not_scale_with_stroke_width(self):
+        self.assertIn('markerUnits="userSpaceOnUse"', svg_of(render(sample(), template())))
 
     def test_affinity_map_escapes_labels(self):
         d = sample()

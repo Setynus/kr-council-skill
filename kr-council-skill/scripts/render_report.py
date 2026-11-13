@@ -341,8 +341,8 @@ def _affinity_map(data):
         ux, uy = (x2 - x1) / length, (y2 - y1) / length
         sx, sy = x1 + ux * _NODE_R, y1 + uy * _NODE_R
         ex, ey = x2 - ux * (_NODE_R + 5), y2 - uy * (_NODE_R + 5)
-        # 반대 방향 간선이 서로 다른 쪽으로 휘어 겹치지 않는다(같은 방향 쌍은 검토자가 하나라 중복이 없다).
-        bend = 26 if ADVISOR_IDS.index(e["from"]) < ADVISOR_IDS.index(e["to"]) else -26
+        # 진행 방향의 같은 쪽으로 휘면, 반대 방향 간선은 (수직 벡터가 뒤집혀) 저절로 반대쪽으로 휘어 겹치지 않는다.
+        bend = 26
         cx, cy = (sx + ex) / 2 - uy * bend, (sy + ey) / 2 + ux * bend
         parts.append(f'    <path {common} d="M{sx:.1f} {sy:.1f} Q{cx:.1f} {cy:.1f} {ex:.1f} {ey:.1f}" '
                      f'marker-end="url(#arrow-{e["kind"]})"/>')
@@ -360,7 +360,8 @@ def _affinity_map(data):
 
     markers = "".join(
         f'<marker id="arrow-{kind}" class="arrow {kind}" viewBox="0 0 10 10" refX="9" refY="5" '
-        f'markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>'
+        f'markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">'
+        f'<path d="M0 0 L10 5 L0 10 z"/></marker>'
         for kind in ("support", "critique"))
     label = "상성 지도: 위원 5명이 서로의 응답을 검토해 고른 가장 강한 응답(실선)과 가장 큰 사각지대(점선)"
     return (
