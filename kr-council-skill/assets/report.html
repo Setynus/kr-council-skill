@@ -7,11 +7,11 @@
 <style>
 :root {
   --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1f; --muted: #5f6368; --line: #dcd9d0;
-  --accent: #1f5f8b; --warn-bg: #fff4d6; --warn-ink: #6b4a00; --note-bg: #e8f1f8;
+  --accent: #1f5f8b; --warn-bg: #fff4d6; --warn-ink: #6b4a00; --note-bg: #e8f1f8; --crit: #b3261e;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #17181a; --panel: #202225; --ink: #ececec; --muted: #a0a4a8; --line: #34373b;
-          --accent: #7fb8e0; --warn-bg: #3a2f10; --warn-ink: #f0d58a; --note-bg: #1f2e3a; }
+          --accent: #7fb8e0; --warn-bg: #3a2f10; --warn-ink: #f0d58a; --note-bg: #1f2e3a; --crit: #f2a09a; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.65;
@@ -33,6 +33,18 @@ h3 { font-size: 1.05rem; margin: 0 0 6px; color: var(--accent); }
 .advisor-mini { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; color: inherit; text-decoration: none; }
 .advisor-mini strong { display: block; color: var(--accent); }
 .advisor-mini span { display: block; font-size: .88rem; color: var(--muted); }
+.affinity-wrap svg { width: 100%; height: auto; display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.affinity-wrap .node circle { fill: var(--accent); }
+.affinity-wrap .node text { fill: var(--ink); font-size: 14px; font-weight: 700; }
+.edge.support { stroke: var(--accent); }
+.edge.critique { stroke: var(--crit); }
+.arrow.support path { fill: var(--accent); }
+.arrow.critique path { fill: var(--crit); }
+.legend { list-style: none; margin: 10px 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .9rem; }
+.swatch { display: inline-block; width: 28px; vertical-align: middle; margin-right: 6px; border-top: 2px solid var(--accent); }
+.swatch.critique { border-top: 2px dashed var(--crit); }
+.swatch.mutual { border-top: 4px solid var(--accent); }
+.legend-note { margin: 0; color: var(--muted); font-size: .85rem; }
 .label { color: var(--muted); font-size: .85rem; font-weight: 700; margin-right: 4px; }
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; background: var(--panel); font-size: .92rem; }
@@ -82,6 +94,7 @@ th { background: var(--note-bg); }
 
   <section id="affinity">
     <h2>상성 지도</h2>
+{{AFFINITY_MAP}}
   </section>
 
   <section id="reviews">

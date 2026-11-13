@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -13,7 +14,7 @@ TEMPLATE = (ROOT / "kr-council-skill" / "assets" / "report.html")
 sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
 from render_report import (  # noqa: E402
-    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, make_mapping, render, validate)
+    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, _affinity_edges, make_mapping, render, validate)
 
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
@@ -235,6 +236,64 @@ class DashboardStructureTests(unittest.TestCase):
         html = render(sample(), template())
         positions = [html.index(f'id="{name}"') for name in ("question", "report", "advisors", "affinity", "reviews")]
         self.assertEqual(positions, sorted(positions))
+
+
+LETTER_OF = {v: k for k, v in MAPPING.items()}
+
+
+def svg_of(html):
+    return html[html.index("<svg"):html.index("</svg>") + len("</svg>")]
+
+
+class AffinityTests(unittest.TestCase):
+    def test_affinity_edges_has_ten_with_kinds(self):
+        edges = _affinity_edges(sample())
+        self.assertEqual(len(edges), 10)
+        self.assertEqual(sum(e["kind"] == "support" for e in edges), 5)
+        self.assertEqual(sum(e["kind"] == "critique" for e in edges), 5)
+        self.assertFalse(any(e["mutual"] for e in edges))
+
+    def test_affinity_edges_marks_mutual_support(self):
+        d = sample()
+        d["reviews"][1]["strongest"] = LETTER_OF["contrarian"]  # 똘똘이 → 투덜이 (투덜이 → 똘똘이는 기존)
+        self.assertEqual(validate(d), [])
+        mutual = [(e["from"], e["to"]) for e in _affinity_edges(d) if e["mutual"]]
+        self.assertEqual(sorted(mutual), [("contrarian", "first_principles"), ("first_principles", "contrarian")])
+
+    def test_affinity_map_renders_ten_edges_and_legend(self):
+        html = render(sample(), template())
+        self.assertEqual(html.count('class="edge '), 10)
+        critiques = re.findall(r'<[^>]*class="edge critique[^>]*>', html)
+        self.assertEqual(len(critiques), 5)
+        self.assertTrue(all("stroke-dasharray" in c for c in critiques))
+        self.assertIn("점수가 아니라", html)
+
+    def test_affinity_map_escapes_labels(self):
+        d = sample()
+        d["advisors"][0]["name"] = "<b>x</b>"
+        svg = svg_of(render(d, template()))
+        self.assertNotIn("<b>x</b>", svg)
+        self.assertIn("&lt;b&gt;x&lt;/b&gt;", svg)
+
+    def test_affinity_map_survives_self_critique(self):
+        d = sample()
+        d["reviews"][0]["weakest"] = LETTER_OF["contrarian"]  # 검토자 본인(투덜이)을 약점으로
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertIn('class="edge critique self"', html)
+        self.assertEqual(html.count('class="edge '), 10)
+
+    def test_affinity_map_hub_target_keeps_all_edges(self):
+        d = sample()
+        for rv in d["reviews"]:
+            rv["strongest"] = LETTER_OF["first_principles"] if rv["reviewer"] != "first_principles" \
+                else LETTER_OF["contrarian"]
+            rv["weakest"] = LETTER_OF["executor"] if rv["strongest"] != LETTER_OF["executor"] \
+                else LETTER_OF["outsider"]
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertEqual(html.count('class="edge '), 10)
+        self.assertEqual(len(_affinity_edges(d)), 10)
 
 
 class ProfileTests(unittest.TestCase):

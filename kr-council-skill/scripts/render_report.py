@@ -5,6 +5,7 @@
 import argparse
 import html
 import json
+import math
 import random
 import re
 import sys
@@ -299,6 +300,81 @@ def _mini_cards(data):
     return "\n".join(out)
 
 
+def _affinity_edges(data):
+    """상호 검토 5개에서 방향 간선 10개를 만든다. 검토자 → 가장 강한 응답은 support, → 가장 큰 사각지대는 critique."""
+    mapping = data["mapping"]
+    edges = []
+    for rv in data["reviews"]:
+        edges.append({"from": rv["reviewer"], "to": mapping[rv["strongest"]], "kind": "support", "mutual": False})
+        edges.append({"from": rv["reviewer"], "to": mapping[rv["weakest"]], "kind": "critique", "mutual": False})
+    support = {(e["from"], e["to"]) for e in edges if e["kind"] == "support"}
+    for e in edges:
+        e["mutual"] = e["kind"] == "support" and (e["to"], e["from"]) in support
+    return edges
+
+
+# 상성 지도 도형(SVG viewBox 기준 좌표)
+_MAP_W, _MAP_H, _MAP_CX, _MAP_CY, _MAP_R, _NODE_R = 600, 470, 300, 240, 165, 16
+
+
+def _affinity_map(data):
+    """상성 지도: 위원 5명을 5각형 꼭짓점에 놓고 검토 간선 10개를 그린다. 수치는 만들지 않는다."""
+    names = {a["id"]: a["name"] for a in data["advisors"]}
+    pos, away = {}, {}  # 노드 중심 좌표, 중심에서 바깥으로 향하는 단위 벡터
+    for n, advisor_id in enumerate(ADVISOR_IDS):
+        angle = math.radians(-90 + 72 * n)
+        away[advisor_id] = (math.cos(angle), math.sin(angle))
+        pos[advisor_id] = (_MAP_CX + _MAP_R * away[advisor_id][0], _MAP_CY + _MAP_R * away[advisor_id][1])
+
+    parts = []
+    for e in _affinity_edges(data):
+        classes = f'edge {e["kind"]}' + (" mutual" if e["mutual"] else "") + (" self" if e["from"] == e["to"] else "")
+        common = (f'class="{classes}" data-from="{_e(e["from"])}" data-to="{_e(e["to"])}" fill="none" '
+                  f'stroke-width="{4 if e["mutual"] else 2}"'
+                  + (' stroke-dasharray="6 5"' if e["kind"] == "critique" else ""))
+        if e["from"] == e["to"]:  # 자기 자신을 약점으로 고른 경우: 노드 옆의 작은 고리
+            (x, y), (ax, ay) = pos[e["from"]], away[e["from"]]
+            parts.append(f'    <circle {common} cx="{x - ay * 24:.1f}" cy="{y + ax * 24:.1f}" r="9"/>')
+            continue
+        (x1, y1), (x2, y2) = pos[e["from"]], pos[e["to"]]
+        length = math.hypot(x2 - x1, y2 - y1)
+        ux, uy = (x2 - x1) / length, (y2 - y1) / length
+        sx, sy = x1 + ux * _NODE_R, y1 + uy * _NODE_R
+        ex, ey = x2 - ux * (_NODE_R + 5), y2 - uy * (_NODE_R + 5)
+        # 반대 방향 간선이 서로 다른 쪽으로 휘어 겹치지 않는다(같은 방향 쌍은 검토자가 하나라 중복이 없다).
+        bend = 26 if ADVISOR_IDS.index(e["from"]) < ADVISOR_IDS.index(e["to"]) else -26
+        cx, cy = (sx + ex) / 2 - uy * bend, (sy + ey) / 2 + ux * bend
+        parts.append(f'    <path {common} d="M{sx:.1f} {sy:.1f} Q{cx:.1f} {cy:.1f} {ex:.1f} {ey:.1f}" '
+                     f'marker-end="url(#arrow-{e["kind"]})"/>')
+
+    for advisor_id in ADVISOR_IDS:
+        (x, y), (ax, ay) = pos[advisor_id], away[advisor_id]
+        anchor = "middle" if abs(ax) < 0.3 else ("start" if ax > 0 else "end")
+        parts.append(
+            f'    <g class="node" data-advisor="{_e(advisor_id)}" tabindex="0">\n'
+            f'      <title>{_e(names[advisor_id])}</title>\n'
+            f'      <circle cx="{x:.1f}" cy="{y:.1f}" r="{_NODE_R}"/>\n'
+            f'      <text x="{x + ax * (_NODE_R + 12):.1f}" y="{y + ay * (_NODE_R + 12):.1f}" text-anchor="{anchor}" '
+            f'dominant-baseline="middle">{_e(ADVISOR_PROFILE[advisor_id]["role"])}</text>\n'
+            f'    </g>')
+
+    markers = "".join(
+        f'<marker id="arrow-{kind}" class="arrow {kind}" viewBox="0 0 10 10" refX="9" refY="5" '
+        f'markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>'
+        for kind in ("support", "critique"))
+    label = "상성 지도: 위원 5명이 서로의 응답을 검토해 고른 가장 강한 응답(실선)과 가장 큰 사각지대(점선)"
+    return (
+        f'    <div class="affinity-wrap">\n'
+        f'    <svg viewBox="0 0 {_MAP_W} {_MAP_H}" role="img" aria-label="{_e(label)}">\n'
+        f'    <defs>{markers}</defs>\n' + "\n".join(parts) + '\n    </svg>\n    </div>\n'
+        '    <ul class="legend">\n'
+        '      <li><span class="swatch support"></span>실선: 가장 강한 응답으로 지지</li>\n'
+        '      <li><span class="swatch critique"></span>점선: 가장 큰 사각지대로 비판</li>\n'
+        '      <li><span class="swatch mutual"></span>굵은 선: 서로를 지지한 쌍</li>\n'
+        '    </ul>\n'
+        '    <p class="legend-note">선의 굵기는 점수가 아니라 이 질문에서의 검토 결과를 나타냅니다.</p>')
+
+
 def _review_table(data):
     names = {a["id"]: a["name"] for a in data["advisors"]}
     mapping = data["mapping"]
@@ -343,6 +419,7 @@ def render(data, template):
         "MODE_BANNER": _e(MODE_BANNERS[data["mode"]]), "DISCLAIMER": _e(DISCLAIMER),
         "CHAIR_NAME": _e(CHAIR_NAME),
         "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
+        "AFFINITY_MAP": _affinity_map(data),
         "REVIEW_TABLE": _review_table(data), "VERDICT": _verdict(data),
     }
     # 한 번의 치환으로 끝낸다. 값 안의 '{{...}}'가 다시 치환되지 않게 하기 위해서다.
