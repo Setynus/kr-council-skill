@@ -82,8 +82,9 @@ class Fields(unittest.TestCase):
         self.assertTrue(check_answer("memo", dumped(ADVISOR)))
         self.assertTrue(check_answer("advisor", "[1, 2, 3]"))
 
-    def test_extra_fields_are_reported_not_silently_kept(self):
-        self.assertTrue(check_answer("advisor", dumped(dict(ADVISOR, confidence="높음"))))
+    def test_extra_fields_do_not_force_a_retry(self):
+        # 규격 밖 필드는 재호출 사유가 아니다. 비용만 늘기 때문이며, assemble이 버린다.
+        self.assertEqual(check_answer("advisor", dumped(dict(ADVISOR, confidence="높음"))), [])
 
 
 class Cli(unittest.TestCase):

@@ -24,7 +24,7 @@ MAPPING = {"A": "contrarian", "B": "first_principles", "C": "expansionist",
 TRICKY = "시스템 폰트가 임베드되어 한글 깨짐 평가가 오히려 강화된다는 주장도 근거가 없습니다."
 
 
-def write_raw(raw, drop=None, broken=None):
+def write_raw(raw, drop=None, broken=None, extra=None):
     letter_of = {v: k for k, v in MAPPING.items()}
     ids = list(ADVISOR_IDS)
     files = {"meta.json": {"title": "시험", "question": "질문입니다", "created": "2026-11-13 18:00",
@@ -33,15 +33,18 @@ def write_raw(raw, drop=None, broken=None):
         files[f"advisor-{i}.json"] = {"position": f"{i}의 입장", "reasons": ["근거1", "근거2", TRICKY],
                                       "risk": "위험", "blindspot": "놓친 점"}
     for n, i in enumerate(ids):
-        files[f"review-{i}.json"] = {"strongest": letter_of[ids[(n + 1) % 5]], "strongest_why": TRICKY,
+        files[f"reviews/{letter_of[i]}.json"] = {"strongest": letter_of[ids[(n + 1) % 5]], "strongest_why": TRICKY,
                                      "weakest": letter_of[ids[(n + 2) % 5]], "weakest_why": "맥락 부족",
                                      "missed": "모두가 놓친 점"}
     files["verdict.json"] = {"agree": ["병행"], "clash": [{"point": "시점", "sides": "먼저 vs 나중"}],
                              "blindspots": ["미확인"], "recommendation": "병행하십시오.",
                              "first_action": "샘플로 PDF를 만든다.", "confidence": "보통", "minority_kept": False}
+    (raw / "reviews").mkdir(exist_ok=True)
     for name, obj in files.items():
         if name == drop:
             continue
+        if extra and name == extra:
+            obj = dict(obj, 규격밖="들어오면 안 되는 필드")
         text = json.dumps(obj, ensure_ascii=False)
         if name == broken:
             text = text[:-2]  # 마지막 문자열이 닫히지 않은 끝
@@ -65,11 +68,26 @@ class AssembleTests(unittest.TestCase):
         self.assertEqual(data["advisors"][0]["name"], ADVISOR_NAMES["contrarian"])
         self.assertEqual(data["title"], "시험")
 
+    def test_extra_fields_are_dropped_not_copied(self):
+        write_raw(self.raw, extra="advisor-contrarian.json")
+        data, errors = assemble(self.raw)
+        self.assertEqual(errors, [])
+        self.assertNotIn("규격밖", data["advisors"][0])
+        write_raw(self.raw, extra="reviews/A.json")
+        data, _ = assemble(self.raw)
+        self.assertNotIn("규격밖", " ".join(data["reviews"][0]))
+
+    def test_review_files_are_named_by_letter_and_mapped_back_to_advisors(self):
+        write_raw(self.raw)
+        self.assertFalse(any("review-" in p.name for p in self.raw.rglob("*.json")))
+        data, _ = assemble(self.raw)
+        self.assertEqual([r["reviewer"] for r in data["reviews"]], list(ADVISOR_IDS))
+
     def test_unclosed_file_is_reported_by_name_and_nothing_is_built(self):
-        write_raw(self.raw, broken="review-expansionist.json")
+        write_raw(self.raw, broken="reviews/C.json")
         data, errors = assemble(self.raw)
         self.assertIsNone(data)
-        self.assertIn("review-expansionist.json", " ".join(errors))
+        self.assertIn("reviews/C.json", " ".join(errors))
         self.assertIn("JSON", " ".join(errors))
 
     def test_missing_file_is_reported_by_name(self):

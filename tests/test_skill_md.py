@@ -228,9 +228,29 @@ class SkillMdTests(unittest.TestCase):
 
     def test_subagents_save_raw_answers_to_files(self):
         step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
-        for needle in ("raw-YYYYMMDD-HHMM", "advisor-<id>.json", "review-<id>.json", "verdict.json",
-                       "Write 도구", "다른 파일은 읽지 않는다", "저장이 막히면"):
+        for needle in ("raw-YYYYMMDD-HHMM", "advisor-<id>.json", "reviews/<글자>.json", "verdict.json",
+                       "Write 도구", "다른 파일은 읽지 않는다", "저장이 막히면", "JSON 자체를 답"):
             self.assertIn(needle, step2)
+
+    def test_review_files_do_not_reveal_advisor_id(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("위원 id가 드러나지 않게", step2)
+        self.assertNotIn("review-<id>", self.body)
+
+    def test_steps_3_and_4_read_the_saved_files(self):
+        step3 = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        step4 = self.body.split("## 4단계", 1)[1].split("## 5단계", 1)[0]
+        self.assertIn("advisor-<id>.json", step3)
+        self.assertIn("읽어", step3)
+        self.assertIn("읽어", step4)
+
+    def test_timestamp_is_obtained_once_and_reused(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("2단계에서 얻은 값", step5)
+
+    def test_check_has_an_exception_for_environments_without_code(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("코드를 실행할 수 없는", section)
 
     def test_report_step_assembles_from_raw_files_and_keeps_manual_fallback(self):
         step5 = self.body.split("## 5단계", 1)[1]

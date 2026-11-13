@@ -108,7 +108,7 @@ def check_answer(kind, text):
         return [f"JSON이 끝까지 닫히지 않았거나 깨졌습니다({exc}). 직접 고치지 말고 재호출 규칙대로 다시 받으세요"]
     if not isinstance(obj, dict):
         return ["최상위 값이 객체(dict)가 아닙니다"]
-    errors = [f"규격 밖 필드 '{extra}'가 있습니다" for extra in sorted(set(obj) - set(ANSWER_FIELDS[kind]))]
+    errors = []  # 규격 밖 필드는 재호출 사유가 아니다(비용만 늘어난다). assemble이 버린다.
     if kind == "verdict":
         _check_verdict(obj, errors)
     elif kind == "advisor":
@@ -131,7 +131,7 @@ ADVISOR_NAMES = {
 
 
 def assemble(raw_dir):
-    """원문 파일(meta.json, advisor-<id>.json, review-<id>.json, verdict.json)로 council 데이터를 만든다.
+    """원문 파일(meta.json, advisor-<id>.json, reviews/<글자>.json, verdict.json)로 council 데이터를 만든다.
 
     문장은 파일의 JSON을 그대로 옮기므로 손으로 옮기다 생기는 오기가 없다. (데이터 또는 None, 오류 목록)을 돌려준다.
     """
@@ -155,16 +155,26 @@ def assemble(raw_dir):
         errors.extend(f"{name}: {line}" for line in found)
         return None if found else json.loads(text)
 
+    keep = lambda obj, kind: {k: obj[k] for k in ANSWER_FIELDS[kind] if k in obj}  # 규격 밖 필드는 버린다
     meta = load(None, "meta.json")
     advisors = [load("advisor", f"advisor-{i}.json") for i in ADVISOR_IDS]
-    reviews = [load("review", f"review-{i}.json") for i in ADVISOR_IDS]
     verdict = load("verdict", "verdict.json")
+    # 검토 파일은 위원 id가 아니라 익명 글자로 저장돼 있다(검토자 프롬프트에 id가 드러나지 않게). 매핑으로 되찾는다.
+    mapping = (meta or {}).get("mapping")
+    if isinstance(mapping, dict) and sorted(mapping.values()) == sorted(ADVISOR_IDS):
+        letter_of = {v: k for k, v in mapping.items()}
+        reviews = [load("review", f"reviews/{letter_of[i]}.json") for i in ADVISOR_IDS]
+    else:
+        reviews = []
+        if meta is not None:
+            errors.append("meta.json: 'mapping'이 A~E와 위원 5명의 1:1 대응이어야 검토 파일을 찾을 수 있습니다")
     if errors:
         return None, errors
     data = dict(meta)
-    data["advisors"] = [{"id": i, "name": ADVISOR_NAMES[i], **a} for i, a in zip(ADVISOR_IDS, advisors)]
-    data["reviews"] = [{"reviewer": i, **r} for i, r in zip(ADVISOR_IDS, reviews)]
-    data["verdict"] = verdict
+    data["advisors"] = [{"id": i, "name": ADVISOR_NAMES[i], **keep(a, "advisor")}
+                        for i, a in zip(ADVISOR_IDS, advisors)]
+    data["reviews"] = [{"reviewer": i, **keep(r, "review")} for i, r in zip(ADVISOR_IDS, reviews)]
+    data["verdict"] = keep(verdict, "verdict")
     errors = validate(data)
     return (None if errors else data), errors
 
@@ -307,7 +317,7 @@ def _main(argv=None):
     chk = sub.add_parser("check", help="하위 에이전트의 답 원문이 끝까지 닫힌 JSON인지 확인")
     chk.add_argument("kind", choices=tuple(ANSWER_FIELDS))
     chk.add_argument("path", help="답을 저장한 파일. 표준 입력이면 -")
-    asm = sub.add_parser("assemble", help="원문 파일 11개로 council.json을 조립")
+    asm = sub.add_parser("assemble", help="meta.json과 답 파일 11개로 council.json을 조립")
     asm.add_argument("raw_dir")
     asm.add_argument("--out", required=True)
     args = parser.parse_args(argv)
