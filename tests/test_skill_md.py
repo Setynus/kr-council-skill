@@ -248,6 +248,15 @@ class SkillMdTests(unittest.TestCase):
         step5 = self.body.split("## 5단계", 1)[1]
         self.assertIn("2단계에서 얻은 값", step5)
 
+    def test_subagents_get_absolute_paths(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("절대 경로", step2)
+
+    def test_rejected_file_is_set_aside_before_the_retry(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("재호출하기 전에", step2)
+        self.assertIn("attempt1-rejected", step2)
+
     def test_check_has_an_exception_for_environments_without_code(self):
         section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
         self.assertIn("코드를 실행할 수 없는", section)
