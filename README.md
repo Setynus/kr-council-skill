@@ -133,31 +133,9 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 버전 이력
 
-<div align="center">
+최신 버전 0.3.2(2026-11-13): `check`가 JSON을 읽지 못할 때 내는 안내를 "첫 불량이면 한 번 재호출하고, 재호출 답도 불량이면 `repair`로 끝 경계를 보정한다"는 정책에 맞췄습니다. 동작은 그대로입니다.
 
-<table width="100%">
-<thead>
-<tr>
-<th width="12%" align="center">버전<img src="docs/spacer.png" width="383" height="1" align="left" alt=""></th>
-<th width="20%" align="center">날짜</th>
-<th width="68%" align="center">핵심 변경</th>
-</tr>
-</thead>
-<tbody>
-<tr><td>0.3.2</td><td>2026&#8209;11&#8209;13</td><td>check 오류 안내를<br>재호출→repair 정책에 맞춤</td></tr>
-<tr><td>0.3.1</td><td>2026&#8209;11&#8209;13</td><td>재호출 1회 뒤<br>끝 경계 자동 보정(repair)</td></tr>
-<tr><td>0.3.0</td><td>2026&#8209;11&#8209;13</td><td>하위 에이전트 답을<br>파서로 확인(check),<br>원문 파일로 조립(assemble)</td></tr>
-<tr><td>0.2.2</td><td>2026&#8209;11&#8209;12</td><td>검토 약점 기준·<br>소수 의견 정의 정비,<br>JSON 잘림 확인</td></tr>
-<tr><td>0.2.1</td><td>2026&#8209;11&#8209;12</td><td>검토·위원장 단계<br>재호출·한국어 지시 추가</td></tr>
-<tr><td>0.2.0</td><td>2026&#8209;11&#8209;11</td><td>렌더러 입력 검증 강화,<br>JSON 시각별 저장,<br>프로젝트 문서·CI 정비</td></tr>
-<tr><td>0.1.1</td><td>2026&#8209;11&#8209;11</td><td>출처 표기 정정<br>(원본과 구성이 같다는 점 명시)</td></tr>
-<tr><td>0.1.0</td><td>2026&#8209;11&#8209;11</td><td>첫 공개 릴리스</td></tr>
-</tbody>
-</table>
-
-</div>
-
-전체 내용은 [CHANGELOG.md](CHANGELOG.md)를 보세요.
+이전 버전과 전체 변경 내용은 [CHANGELOG.md](CHANGELOG.md), 배포본은 [Releases](https://github.com/Setynus/kr-council-skill/releases)를 보세요.
 
 ## 기여와 이슈
 버그나 제안은 [GitHub Issues](https://github.com/Setynus/kr-council-skill/issues)로 남겨 주세요. 개발 방법은 [CONTRIBUTING.md](CONTRIBUTING.md), 보안 문제는 [SECURITY.md](SECURITY.md)를 보세요.
