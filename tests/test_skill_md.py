@@ -213,6 +213,69 @@ class SkillMdTests(unittest.TestCase):
         section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
         self.assertIn("python3", section)
 
+    def test_closure_is_decided_by_check_not_by_eye(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("render_report.py", section)
+        self.assertIn("check", section)
+        self.assertIn("눈으로 보고 판정하지 않는다", section)
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        for kind in ("check advisor", "check review", "check verdict"):
+            self.assertIn(kind, step2)
+
+    def test_cost_notice_counts_retries(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("재호출", section.split("비용을 먼저 알린다", 1)[1].split("\n", 1)[0])
+
+    def test_subagents_save_raw_answers_to_files(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        for needle in ("raw-YYYYMMDD-HHMM", "advisor-<id>.json", "reviews/<글자>.json", "verdict.json",
+                       "Write 도구", "다른 파일은 읽지 않는다", "저장이 막히면", "JSON 자체를 답"):
+            self.assertIn(needle, step2)
+
+    def test_review_files_do_not_reveal_advisor_id(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("위원 id가 드러나지 않게", step2)
+        self.assertNotIn("review-<id>", self.body)
+
+    def test_steps_3_and_4_read_the_saved_files(self):
+        step3 = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        step4 = self.body.split("## 4단계", 1)[1].split("## 5단계", 1)[0]
+        self.assertIn("advisor-<id>.json", step3)
+        self.assertIn("읽어", step3)
+        self.assertIn("읽어", step4)
+
+    def test_timestamp_is_obtained_once_and_reused(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("2단계에서 얻은 값", step5)
+
+    def test_subagents_get_absolute_paths(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("절대 경로", step2)
+
+    def test_rejected_file_is_set_aside_before_the_retry(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("재호출하기 전에", step2)
+        self.assertIn("attempt1-rejected", step2)
+
+    def test_check_has_an_exception_for_environments_without_code(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("코드를 실행할 수 없는", section)
+
+    def test_report_step_assembles_from_raw_files_and_keeps_manual_fallback(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("render_report.py\" assemble", step5)
+        self.assertIn("meta.json", step5)
+        self.assertIn("고치지 않고 그대로", step5)
+
+    def test_approved_repair_is_disclosed_in_title(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("title", step2)
+        self.assertIn("보정", step2)
+
+    def test_final_message_gives_absolute_report_path(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("절대 경로", step5)
+
 
 if __name__ == "__main__":
     unittest.main()

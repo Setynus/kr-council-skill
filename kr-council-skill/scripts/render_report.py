@@ -53,6 +53,132 @@ def _require(obj, keys, where, errors):
     return True
 
 
+def _check_reasons(adv, where, errors):
+    reasons = adv.get("reasons")
+    if not isinstance(reasons, list) or len(reasons) != REASONS_COUNT or not all(_text(r) for r in reasons):
+        errors.append(f"{where}: 'reasons'는 비어 있지 않은 문자열 {REASONS_COUNT}개여야 합니다")
+
+
+def _check_letters(rv, where, errors):
+    for field in ("strongest", "weakest"):
+        if rv.get(field) not in tuple(LETTERS):
+            errors.append(f"{where}: '{field}'는 {LETTERS} 중 하나여야 합니다(받은 값: {rv.get(field)!r})")
+    if rv.get("strongest") == rv.get("weakest") and rv.get("strongest") in tuple(LETTERS):
+        errors.append(f"{where}: 가장 강한 응답과 가장 약한 응답이 같은 글자({rv['strongest']})입니다")
+
+
+def _check_verdict(verdict, errors):
+    if _require(verdict, ("recommendation", "first_action"), "verdict", errors):
+        for key in ("agree", "blindspots"):
+            items = verdict.get(key)
+            if not isinstance(items, list) or not all(_text(x) for x in items):
+                errors.append(f"verdict: '{key}'는 비어 있지 않은 문자열의 목록이어야 합니다")
+        if isinstance(verdict.get("agree"), list) and not verdict["agree"]:
+            errors.append("verdict: 'agree'에는 항목이 하나 이상 있어야 합니다")
+        clash = verdict.get("clash")
+        if not isinstance(clash, list) or not all(
+                isinstance(c, dict) and _text(c.get("point")) and _text(c.get("sides")) for c in clash):
+            errors.append("verdict: 'clash'는 point와 sides(둘 다 문자열)가 있는 항목의 목록이어야 합니다")
+        elif verdict.get("minority_kept") is True and not clash:
+            errors.append("verdict: 'minority_kept'가 true이면 'clash'에 충돌이 하나 이상 있어야 합니다")
+        if verdict.get("confidence") not in CONFIDENCES:
+            errors.append(f"verdict: 'confidence'는 {', '.join(CONFIDENCES)} 중 하나여야 합니다")
+        if not isinstance(verdict.get("minority_kept"), bool):
+            errors.append("verdict: 'minority_kept'는 true/false여야 합니다")
+
+
+# 하위 에이전트가 내는 답의 필드. SKILL.md의 응답 JSON 틀과 같아야 한다.
+ANSWER_FIELDS = {
+    "advisor": ("position", "reasons", "risk", "blindspot"),
+    "review": ("strongest", "strongest_why", "weakest", "weakest_why", "missed"),
+    "verdict": ("agree", "clash", "blindspots", "recommendation", "first_action", "confidence", "minority_kept"),
+}
+
+
+def check_answer(kind, text):
+    """하위 에이전트의 답 원문이 끝까지 닫힌 JSON이고 규격에 맞는지 본다. 오류 문장 목록을 돌려준다.
+
+    사람이 눈으로 `"}`를 확인하면 `\\"}`나 닫힘 없는 끝을 놓친다. 그래서 파서가 판정한다.
+    """
+    if kind not in ANSWER_FIELDS:
+        return [f"kind: {', '.join(ANSWER_FIELDS)} 중 하나여야 합니다(받은 값: {kind!r})"]
+    try:
+        obj = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return [f"JSON이 끝까지 닫히지 않았거나 깨졌습니다({exc}). 직접 고치지 말고 재호출 규칙대로 다시 받으세요"]
+    if not isinstance(obj, dict):
+        return ["최상위 값이 객체(dict)가 아닙니다"]
+    errors = []  # 규격 밖 필드는 재호출 사유가 아니다(비용만 늘어난다). assemble이 버린다.
+    if kind == "verdict":
+        _check_verdict(obj, errors)
+    elif kind == "advisor":
+        _require(obj, ("position", "risk", "blindspot"), kind, errors)
+        _check_reasons(obj, kind, errors)
+    else:
+        _require(obj, ("strongest_why", "weakest_why", "missed"), kind, errors)
+        _check_letters(obj, kind, errors)
+    return errors
+
+
+# 보고서 카드에 쓰는 위원 호칭. SKILL.md의 위원 이름 표와 같아야 한다(테스트가 비교한다).
+ADVISOR_NAMES = {
+    "contrarian": "투덜이 스머프(반대자)",
+    "first_principles": "똘똘이 스머프(본질 탐구자)",
+    "expansionist": "화가 스머프(확장가)",
+    "outsider": "덜렁이 스머프(아웃사이더)",
+    "executor": "재주꾼 스머프(실행가)",
+}
+
+
+def assemble(raw_dir):
+    """원문 파일(meta.json, advisor-<id>.json, reviews/<글자>.json, verdict.json)로 council 데이터를 만든다.
+
+    문장은 파일의 JSON을 그대로 옮기므로 손으로 옮기다 생기는 오기가 없다. (데이터 또는 None, 오류 목록)을 돌려준다.
+    """
+    raw = Path(raw_dir)
+    errors = []
+
+    def load(kind, name):
+        try:
+            text = (raw / name).read_text(encoding="utf-8")
+        except OSError:
+            errors.append(f"{name}: 파일을 읽을 수 없습니다")
+            return None
+        found = check_answer(kind, text) if kind else []
+        if not kind:
+            try:
+                obj = json.loads(text)
+            except json.JSONDecodeError as exc:
+                found = [f"JSON이 끝까지 닫히지 않았거나 깨졌습니다({exc})"]
+            else:
+                found = [] if isinstance(obj, dict) else ["최상위 값이 객체(dict)가 아닙니다"]
+        errors.extend(f"{name}: {line}" for line in found)
+        return None if found else json.loads(text)
+
+    keep = lambda obj, kind: {k: obj[k] for k in ANSWER_FIELDS[kind] if k in obj}  # 규격 밖 필드는 버린다
+    meta = load(None, "meta.json")
+    advisors = [load("advisor", f"advisor-{i}.json") for i in ADVISOR_IDS]
+    verdict = load("verdict", "verdict.json")
+    # 검토 파일은 위원 id가 아니라 익명 글자로 저장돼 있다(검토자 프롬프트에 id가 드러나지 않게). 매핑으로 되찾는다.
+    mapping = (meta or {}).get("mapping")
+    if isinstance(mapping, dict) and sorted(mapping.values()) == sorted(ADVISOR_IDS):
+        letter_of = {v: k for k, v in mapping.items()}
+        reviews = [load("review", f"reviews/{letter_of[i]}.json") for i in ADVISOR_IDS]
+    else:
+        reviews = []
+        if meta is not None:
+            errors.append("meta.json: 'mapping'이 A~E와 위원 5명의 1:1 대응이어야 검토 파일을 찾을 수 있습니다")
+    if errors:
+        return None, errors
+    data = dict(meta)
+    data["advisors"] = [{"id": i, "name": ADVISOR_NAMES[i], **keep(a, "advisor")}
+                        for i, a in zip(ADVISOR_IDS, advisors)]
+    data["reviews"] = [{"reviewer": i, **keep(r, "review")} for i, r in zip(ADVISOR_IDS, reviews)]
+    data["verdict"] = keep(verdict, "verdict")
+    errors = validate(data)
+    return (None if errors else data), errors
+
+
 def validate(data):
     """council.json을 검사해 오류 문장 목록을 돌려준다. 비어 있으면 유효하다."""
     errors = []
@@ -72,10 +198,7 @@ def validate(data):
             where = f"위원 {n}번"
             if _require(adv, ("id", "name", "position", "risk", "blindspot"), where, errors):
                 seen.append(adv.get("id"))
-                reasons = adv.get("reasons")
-                if not isinstance(reasons, list) or len(reasons) != REASONS_COUNT \
-                        or not all(_text(r) for r in reasons):
-                    errors.append(f"{where}: 'reasons'는 비어 있지 않은 문자열 {REASONS_COUNT}개여야 합니다")
+                _check_reasons(adv, where, errors)
         names = [a.get("name") for a in advisors if isinstance(a, dict)]
         if len(set(map(str, names))) != len(names):
             errors.append("위원 이름이 서로 달라야 합니다(중복된 이름이 있습니다)")
@@ -99,35 +222,14 @@ def validate(data):
             if not _require(rv, ("reviewer", "strongest_why", "weakest_why", "missed"), where, errors):
                 continue
             reviewers.append(rv.get("reviewer"))
-            for field in ("strongest", "weakest"):
-                if rv.get(field) not in tuple(LETTERS):
-                    errors.append(f"{where}: '{field}'는 {LETTERS} 중 하나여야 합니다(받은 값: {rv.get(field)!r})")
+            _check_letters(rv, where, errors)
             if mapping_ok and rv.get("strongest") in tuple(LETTERS) \
                     and mapping[rv["strongest"]] == rv.get("reviewer"):
                 errors.append(f"{where}: 자기 자신의 응답({rv['strongest']})을 가장 강한 응답으로 골랐습니다")
-            if rv.get("strongest") == rv.get("weakest") and rv.get("strongest") in tuple(LETTERS):
-                errors.append(f"{where}: 가장 강한 응답과 가장 약한 응답이 같은 글자({rv['strongest']})입니다")
         if sorted(map(str, reviewers)) != sorted(ADVISOR_IDS):
             errors.append(f"reviews: 검토자 id가 위원 5명과 일치해야 합니다(받은 값: {reviewers})")
 
-    verdict = data.get("verdict")
-    if _require(verdict, ("recommendation", "first_action"), "verdict", errors):
-        for key in ("agree", "blindspots"):
-            items = verdict.get(key)
-            if not isinstance(items, list) or not all(_text(x) for x in items):
-                errors.append(f"verdict: '{key}'는 비어 있지 않은 문자열의 목록이어야 합니다")
-        if isinstance(verdict.get("agree"), list) and not verdict["agree"]:
-            errors.append("verdict: 'agree'에는 항목이 하나 이상 있어야 합니다")
-        clash = verdict.get("clash")
-        if not isinstance(clash, list) or not all(
-                isinstance(c, dict) and _text(c.get("point")) and _text(c.get("sides")) for c in clash):
-            errors.append("verdict: 'clash'는 point와 sides(둘 다 문자열)가 있는 항목의 목록이어야 합니다")
-        elif verdict.get("minority_kept") is True and not clash:
-            errors.append("verdict: 'minority_kept'가 true이면 'clash'에 충돌이 하나 이상 있어야 합니다")
-        if verdict.get("confidence") not in CONFIDENCES:
-            errors.append(f"verdict: 'confidence'는 {', '.join(CONFIDENCES)} 중 하나여야 합니다")
-        if not isinstance(verdict.get("minority_kept"), bool):
-            errors.append("verdict: 'minority_kept'는 true/false여야 합니다")
+    _check_verdict(data.get("verdict"), errors)
     return errors
 
 
@@ -212,11 +314,35 @@ def _main(argv=None):
     rend = sub.add_parser("render", help="council.json을 HTML 보고서로 변환")
     rend.add_argument("json_path")
     rend.add_argument("--out", required=True)
+    chk = sub.add_parser("check", help="하위 에이전트의 답 원문이 끝까지 닫힌 JSON인지 확인")
+    chk.add_argument("kind", choices=tuple(ANSWER_FIELDS))
+    chk.add_argument("path", help="답을 저장한 파일. 표준 입력이면 -")
+    asm = sub.add_parser("assemble", help="meta.json과 답 파일 11개로 council.json을 조립")
+    asm.add_argument("raw_dir")
+    asm.add_argument("--out", required=True)
     args = parser.parse_args(argv)
 
+    if args.cmd == "assemble":
+        data, errors = assemble(args.raw_dir)
+        if errors:
+            print("council.json을 만들 수 없습니다:\n" + "\n".join(errors), file=sys.stderr)
+            return VALIDATION_ERROR_EXIT
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"저장했습니다: {out}")
+        return 0
     if args.cmd == "shuffle":
         print(json.dumps(make_mapping(args.seed), ensure_ascii=False))
         return 0
+    if args.cmd == "check":
+        raw = sys.stdin.buffer.read() if args.path == "-" else Path(args.path).read_bytes()
+        errors = check_answer(args.kind, raw.decode("utf-8", errors="replace"))
+        for line in errors:
+            print(line, file=sys.stderr)
+        if not errors:
+            print("통과: 끝까지 닫힌 JSON이고 규격에 맞습니다")
+        return VALIDATION_ERROR_EXIT if errors else 0
     try:
         data = json.loads(Path(args.json_path).read_text(encoding="utf-8"))
         payload = render(data, TEMPLATE_PATH.read_text(encoding="utf-8")).encode("utf-8")

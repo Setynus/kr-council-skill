@@ -1,6 +1,6 @@
 # kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
 
-[![Version](https://img.shields.io/badge/version-0.2.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
@@ -74,7 +74,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 2. 위원 5명이 서로 보지 못한 채 **동시에** 답합니다.
 3. 답을 A~E로 익명화해(순서는 스크립트가 섞음) 위원이 서로 검토합니다.
 4. 위원장이 합의·충돌·놓친 점·권고·**가장 먼저 할 한 가지**를 정리합니다.
-5. `council-reports/` 폴더에 HTML 보고서(`council-YYYYMMDD-HHMM.html`)와 같은 이름의 JSON을 저장합니다.
+5. `council-reports/` 폴더에 HTML 보고서(`council-YYYYMMDD-HHMM.html`)와 같은 이름의 JSON을 저장합니다. 위원이 낸 원문 JSON은 `council-reports/raw-YYYYMMDD-HHMM/`에 남습니다.
 
 ### 실행 방식 3가지
 <div align="center">
@@ -144,6 +144,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 </tr>
 </thead>
 <tbody>
+<tr><td>0.3.0</td><td>2026&#8209;11&#8209;13</td><td>하위 에이전트 답을<br>파서로 확인(check),<br>원문 파일로 조립(assemble)</td></tr>
 <tr><td>0.2.2</td><td>2026&#8209;11&#8209;12</td><td>검토 약점 기준·<br>소수 의견 정의 정비,<br>JSON 잘림 확인</td></tr>
 <tr><td>0.2.1</td><td>2026&#8209;11&#8209;12</td><td>검토·위원장 단계<br>재호출·한국어 지시 추가</td></tr>
 <tr><td>0.2.0</td><td>2026&#8209;11&#8209;11</td><td>렌더러 입력 검증 강화,<br>JSON 시각별 저장,<br>프로젝트 문서·CI 정비</td></tr>
