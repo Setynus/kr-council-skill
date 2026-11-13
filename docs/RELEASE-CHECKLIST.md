@@ -6,7 +6,7 @@
    - `git log --all -p | grep -n -E '@g[m]ail|g[h]p_|s[k]-[A-Za-z0-9]{20}|C:.Use[r]s|Claude[C]ode'`
    - `git log --all --format='%ae %ce' | sort -u` 에는 noreply 주소 하나만 나와야 한다.
 2. **테스트와 패키지**: `python -m unittest discover tests`가 통과하는지, `python tools/package_skill.py`로 만든 zip을 풀어 `render_report.py`가 돌아가는지 확인한다.
-3. **버전 맞추기**: `kr-council-skill/SKILL.md`의 `metadata.version`과 태그(`vX.Y.Z`)가 같아야 한다.
+3. **버전 맞추기**: `kr-council-skill/SKILL.md`의 `metadata.version`과 태그(`vX.Y.Z`)가 같아야 한다. README는 상단 배지와 `## 버전 이력`의 "최신 버전" 한 줄만 새 버전으로 고친다. 이력 표는 두지 않는다(원본은 CHANGELOG).
 4. **GitHub 비밀값 검사**: 저장소 Settings → Code security에서 secret scanning과 push protection을 켠다.
 5. **개인 데이터**: `comparison/` 질문과 결과는 가상의 사례다. 실제 사용자의 질문이나 보고서가 섞이지 않았는지 훑는다(`council-reports/`는 `.gitignore`).
 6. **캐릭터 호칭**: 위원 호칭이 상표인 스머프 캐릭터 이름이다. 공개하면 권리자와 무관함을 밝힌 `NOTICE.md` 문구가 있는지 확인하고, 부담스러우면 호칭을 일반 이름으로 바꾼다(`kr-council-skill/SKILL.md`의 위원 이름 표와 `references/advisors.md`, 렌더러 템플릿의 위원장 제목, `render_report.py`의 `ADVISOR_NAMES`를 바꾸면 된다. `ADVISOR_NAMES`와 SKILL.md 표가 다르면 테스트가 실패한다).
