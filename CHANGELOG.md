@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-15
+
 ### 추가
 - HTML 보고서를 결론 중심 대시보드로 바꿨습니다. 스티키 헤더(스킬 이름, 섹션 바로가기, 다크 모드 토글, 인쇄 버튼) 아래에 질문, 위원장 최종 보고서(가장 크게), 위원 5명의 소형 카드(이름·역할·성격 한 줄), 상성 지도, 상호 검토 표 순서로 나옵니다.
 - 위원 소형 카드를 누르면 위원장 카드 자리로 스크롤하고, 그 카드 안에서 해당 위원의 판단으로 전환합니다("위원장 보고서" 버튼으로 복귀). 위원장 보고서를 위원 판단으로 대체하지 않고 같은 카드 안에서 전환합니다.
@@ -113,7 +115,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.4.0
 [0.3.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.0
