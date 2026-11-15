@@ -1,6 +1,6 @@
 # kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
 
-[![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
@@ -133,7 +133,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 버전 이력
 
-최신 버전 0.3.2(2026-11-13): `check`가 JSON을 읽지 못할 때 내는 안내를 "첫 불량이면 한 번 재호출하고, 재호출 답도 불량이면 `repair`로 끝 경계를 보정한다"는 정책에 맞췄습니다. 동작은 그대로입니다.
+최신 버전 0.4.0(2026-11-15): 보고서 HTML을 결론 중심 대시보드로 바꿨습니다. 위원장 보고서를 가장 크게 보이고, 위원 소형 카드·상성 지도·다크 모드·인쇄 스타일을 더했으며, JS가 없어도 내용이 모두 보입니다.
 
 이전 버전과 전체 변경 내용은 [CHANGELOG.md](CHANGELOG.md), 배포본은 [Releases](https://github.com/Setynus/kr-council-skill/releases)를 보세요.
 
