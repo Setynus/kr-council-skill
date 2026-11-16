@@ -389,6 +389,17 @@ class AffinityTests(unittest.TestCase):
         self.assertEqual(len(_affinity_edges(d)), 10)
 
 
+class RecommendationBriefTests(unittest.TestCase):
+    def test_recommendation_rest_keeps_its_first_sentence_in_brief_mode(self):
+        d = sample()
+        d["verdict"]["recommendation"] = "세트에 집중한다. 이유는 원가다. 다만 광고는 보류한다."
+        html = render(d, template())
+        self.assertIn('<p class="rec-rest"><span class="s1">이유는 원가다.</span><span class="rest"> 다만 광고는 보류한다.</span></p>', html)
+        css = re.search(r"<style>(.*?)</style>", template(), flags=re.S).group(1)
+        self.assertNotIn(".rec-rest { display: none; }", css)
+        self.assertNotRegex(css, r'data-print-level="3"\][^{]*\.rec-rest')
+
+
 class NoticeAndLinkTests(unittest.TestCase):
     def test_affinity_nodes_link_to_review_cards(self):
         svg = svg_of(render(sample(), template()))

@@ -476,7 +476,7 @@ def _verdict(data):
                              for c in v["clash"]) + "</ul>"
     minority = "소수 의견 유지됨" if v["minority_kept"] else "소수 의견 없음"
     rec_first, rec_rest = split_first_sentence(v["recommendation"])
-    rec_rest_html = f'<p class="rec-rest">{_e(rec_rest.lstrip())}</p>' if rec_rest.strip() else ""
+    rec_rest_html = f'<p class="rec-rest">{_sent(rec_rest.lstrip())}</p>' if rec_rest.strip() else ""
     panels = (("agree", "위원회가 동의하는 점", "동의하는 점", items(v["agree"])),
               ("blind", "상호 검토에서 드러난 사각지대", "사각지대", items(v["blindspots"])),
               ("clash", "위원회가 충돌하는 점", "충돌하는 점", clash))
