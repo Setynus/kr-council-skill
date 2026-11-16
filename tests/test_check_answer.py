@@ -123,6 +123,53 @@ class Fields(unittest.TestCase):
         self.assertEqual(check_answer("advisor", dumped(dict(ADVISOR, confidence="높음"))), [])
 
 
+# 2026-11-12 실행에서 반대자 검토가 영어로 온 사고를 본뜬 픽스처(문장은 새로 썼다).
+ENGLISH_REVIEW = {"strongest": "B", "weakest": "C",
+                  "strongest_why": "Gives a concrete trigger for moving: hitting the free plan limits or a pricing change.",
+                  "weakest_why": "It has no domain knowledge and admits it cannot judge the hosting cost difference.",
+                  "missed": "Nobody asks about data ownership, backups, or how long a migration would really take."}
+
+
+class Language(unittest.TestCase):
+    """답은 한국어여야 한다. 영어로 온 답은 재호출 사유이고, repair나 번역으로 살리지 않는다."""
+
+    def test_english_review_fails_with_a_language_message(self):
+        errors = check_answer("review", dumped(ENGLISH_REVIEW))
+        self.assertEqual(len(errors), 1)
+        self.assertIn("한국어가 아닌", errors[0])
+        self.assertIn("재호출", errors[0])
+
+    def test_language_message_forbids_repair_and_translation(self):
+        message = check_answer("review", dumped(ENGLISH_REVIEW))[0]
+        self.assertIn("고치지 말고", message)
+        self.assertIn("사용자에게 알립니다", message)
+
+    def test_one_english_field_in_a_korean_answer_fails(self):
+        review = dict(REVIEW, missed=ENGLISH_REVIEW["missed"])
+        self.assertTrue(check_answer("review", dumped(review)))
+
+    def test_english_advisor_and_verdict_fail_too(self):
+        long_en = "This is a long English sentence that clearly is not Korean at all, so it must be rejected."
+        self.assertTrue(check_answer("advisor", dumped(dict(ADVISOR, position=long_en))))
+        self.assertTrue(check_answer("verdict", dumped(dict(VERDICT, recommendation=long_en))))
+
+    def test_product_names_inside_korean_sentences_pass(self):
+        mixed = "회의록 요약은 Clova Note, Zoom, Google Meet, Teams 같은 플랫폼 기본 기능과 직접 겹칩니다."
+        self.assertEqual(check_answer("review", dumped(dict(REVIEW, missed=mixed))), [])
+
+    def test_short_english_fields_are_not_judged(self):
+        self.assertEqual(check_answer("verdict", dumped(dict(
+            VERDICT, clash=[{"point": "Vercel vs VPS", "sides": "Cloudflare, Fly.io"}]))), [])
+
+    def test_english_answer_with_broken_ending_is_not_repaired(self):
+        broken = dumped(ENGLISH_REVIEW)[:-2]
+        self.assertIsNone(repair_ending("review", broken))
+        self.assertIsNone(repair_ending("review", dumped(ENGLISH_REVIEW)))  # 끝이 닫힌 영어 답도 보정 대상이 아님
+
+    def test_extra_english_field_outside_the_spec_is_ignored(self):
+        self.assertEqual(check_answer("review", dumped(dict(REVIEW, note=ENGLISH_REVIEW["missed"]))), [])
+
+
 class Cli(unittest.TestCase):
     def run_check(self, kind, text):
         return subprocess.run([sys.executable, str(SCRIPT), "check", kind, "-"], input=text.encode("utf-8"),
@@ -134,6 +181,12 @@ class Cli(unittest.TestCase):
         bad = self.run_check("advisor", dumped(ADVISOR)[:-2])
         self.assertEqual(bad.returncode, 2)
         self.assertIn("JSON", bad.stderr.decode("utf-8", "replace"))
+
+    def test_english_answer_exit_code(self):
+        english = self.run_check("review", dumped(ENGLISH_REVIEW))
+        self.assertEqual(english.returncode, 2)
+        # 한글은 CI의 Windows 콘솔 인코딩에서 '?'로 바뀌므로 ASCII 단어로만 확인한다
+        self.assertIn("repair", english.stderr.decode("utf-8", "replace"))
 
 
 if __name__ == "__main__":
