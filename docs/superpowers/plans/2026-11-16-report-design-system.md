@@ -22,7 +22,7 @@
 - **선택(Task 8):** `pip install playwright` + `python -m playwright install chromium`. 설치할 수 없으면 Task 8의 브라우저 검증을 "미실시"로 기록하고 나머지를 끝낸다. 통과한 것처럼 쓰지 않는다.
 - **푸시·PR:** `git push -u origin feat/report-design-system`, `gh pr create`. 인증이 없으면 푸시 직전까지 하고 사용자에게 알린다. 프록시 환경에서 푸시가 실패하면 `git -c push.negotiate=true push …`를 시도한다.
 - **커밋 꼬리말:** 사용 중인 플랫폼의 기본 공동 저자 표기를 따른다(예: `Co-Authored-By: Claude <noreply@anthropic.com>`). 세션 URL 줄은 있을 때만 넣는다.
-- **샘플 데이터:** 실제 보고서 JSON(`council-20261112-0748.json`)은 저장소에 없다. 사용자 로컬 `D:\ClaudeCode\GitHUB\kr-council-skill\council-reports\`에 있으니 없으면 `tests/test_render_report.py`의 `sample()` 헬퍼로 만든 데이터를 임시 JSON으로 저장해 쓴다. 긴 보고서도 `sample()`의 문장을 3배로 이어 붙여 만든다.
+- **샘플 데이터:** 실제 보고서 JSON(`council-20261112-0748.json`)은 저장소에 없다. 작업 폴더의 `council-reports/`(gitignore)에 있으니 없으면 `tests/test_render_report.py`의 `sample()` 헬퍼로 만든 데이터를 임시 JSON으로 저장해 쓴다. 긴 보고서도 `sample()`의 문장을 3배로 이어 붙여 만든다.
 - **언어:** 사용자 응답·PR 본문·커밋 메시지는 한국어. 코드 식별자는 영어.
 - **사용자 확정 사항(2026-11-16):** `advisors.md`는 기존 "관점" 문장을 바꾸지 않고 `**화면 소개:**` 한 줄만 추가한다. 위원 프롬프트는 바뀌지 않는다(Task 1).
 
