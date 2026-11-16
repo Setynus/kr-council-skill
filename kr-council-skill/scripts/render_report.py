@@ -145,18 +145,19 @@ def repair_ending(kind, text):
 CHAIR_NAME = "파파스머프"  # 위원장 호칭. 템플릿에는 박지 않고 슬롯으로 넣는다.
 
 # 위원 프로필 단일 표. nick+role은 SKILL.md의 위원 이름 표와 같아야 하고, blurb는
-# references/advisors.md의 "관점" 문장 일부여야 한다(둘 다 테스트가 비교한다).
+# README "위원 소개"의 한두 줄(줄은 개행으로 구분)이며 references/advisors.md의
+# "화면 소개" 줄에도 같은 문구가 있어야 한다(테스트가 비교한다).
 ADVISOR_PROFILE = {
     "contrarian": {"nick": "투덜이 스머프", "role": "반대자",
-                   "blurb": "이 선택이 실패한다면 가장 그럴듯한 이유가 무엇인지 찾는다"},
+                   "blurb": "뭐든 싫다며 문제부터 짚는다\n선택이 실패할 때를 대비한 가장 그럴듯한 이유를 찾는다"},
     "first_principles": {"nick": "똘똘이 스머프", "role": "본질 탐구자",
-                         "blurb": "질문 뒤에 있는 진짜 목적을 묻는다"},
+                         "blurb": "진짜 목적이 뭔지, 선택지가 맞는 질문인지 부터 묻는다"},
     "expansionist": {"nick": "화가 스머프", "role": "확장가",
-                     "blurb": "다른 위원이 놓친 상승 여력과 인접 기회를 찾는다"},
+                     "blurb": "큰 그림과 가능성을 그린다\n잘 풀렸을 때의 상승 여력과 인접 기회를 본다"},
     "outsider": {"nick": "덜렁이 스머프", "role": "아웃사이더",
-                 "blurb": "배경지식이 전혀 없는 사람처럼, 눈앞의 내용만으로 반응한다"},
+                 "blurb": "배경지식 없는 사람의 순진한 시각으로 당연한 것을 묻는다"},
     "executor": {"nick": "재주꾼 스머프", "role": "실행가",
-                 "blurb": "이것이 실제로 가능한지, 가장 빠른 길이 무엇인지만 본다"},
+                 "blurb": "일단 만들어 본다\n가장 작은 검증 단계를 본다"},
 }
 ADVISOR_NAMES = {i: f"{p['nick']}({p['role']})" for i, p in ADVISOR_PROFILE.items()}
 

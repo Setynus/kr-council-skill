@@ -215,7 +215,8 @@ class DashboardStructureTests(unittest.TestCase):
         self.assertEqual(html.count('class="advisor-card"'), 5)
         for advisor_id, profile in ADVISOR_PROFILE.items():
             self.assertIn(f'href="#advisor-{advisor_id}"', html)
-            self.assertIn(profile["blurb"], html)
+            for line in profile["blurb"].split(chr(10)):
+                self.assertIn(line, html)
 
     def test_detail_panels_have_anchor_ids(self):
         html = render(sample(), template())
@@ -369,7 +370,19 @@ class ProfileTests(unittest.TestCase):
     def test_blurbs_are_sentences_from_advisors_md(self):
         advisors_md = (ROOT / "kr-council-skill" / "references" / "advisors.md").read_text(encoding="utf-8")
         for advisor_id, profile in ADVISOR_PROFILE.items():
-            self.assertIn(profile["blurb"], advisors_md, advisor_id)
+            for line in profile["blurb"].split(chr(10)):
+                self.assertIn(line, advisors_md, advisor_id)
+
+    def test_blurbs_match_readme_intro(self):
+        expected = {
+            "contrarian": ["뭐든 싫다며 문제부터 짚는다", "선택이 실패할 때를 대비한 가장 그럴듯한 이유를 찾는다"],
+            "first_principles": ["진짜 목적이 뭔지, 선택지가 맞는 질문인지 부터 묻는다"],
+            "expansionist": ["큰 그림과 가능성을 그린다", "잘 풀렸을 때의 상승 여력과 인접 기회를 본다"],
+            "outsider": ["배경지식 없는 사람의 순진한 시각으로 당연한 것을 묻는다"],
+            "executor": ["일단 만들어 본다", "가장 작은 검증 단계를 본다"],
+        }
+        for advisor_id, lines in expected.items():
+            self.assertEqual(ADVISOR_PROFILE[advisor_id]["blurb"].split(chr(10)), lines)
 
     def test_chair_name_comes_from_constant(self):
         self.assertIn(CHAIR_NAME, render(sample(), template()))
