@@ -185,7 +185,8 @@ class Cli(unittest.TestCase):
     def test_english_answer_exit_code(self):
         english = self.run_check("review", dumped(ENGLISH_REVIEW))
         self.assertEqual(english.returncode, 2)
-        self.assertIn("한국어가 아닌", english.stderr.decode("utf-8", "replace"))
+        # 한글은 CI의 Windows 콘솔 인코딩에서 '?'로 바뀌므로 ASCII 단어로만 확인한다
+        self.assertIn("repair", english.stderr.decode("utf-8", "replace"))
 
 
 if __name__ == "__main__":
