@@ -96,6 +96,37 @@ ANSWER_FIELDS = {
 }
 
 
+# 답은 한국어여야 한다. 한글+영문자가 이 수 이상인 문장 필드의 한글 비율이 기준 미만이면 영어 답으로 본다.
+# 실측(2026-11-16): 영어로 온 검토 필드는 0%, 정상 한국어 필드는 최소 38%(영문 서비스명이 많은 문장).
+# 짧은 필드(제품명 나열 등)는 판정하지 않는다. 오판은 재호출 비용이라 기준을 낮게 잡았다.
+LANGUAGE_MIN_LETTERS = 40
+LANGUAGE_MIN_HANGUL_RATIO = 0.2
+_HANGUL = re.compile(r"[가-힣]")
+_LATIN = re.compile(r"[A-Za-z]")
+
+
+def _strings(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, list):
+        for item in value:
+            yield from _strings(item)
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _strings(item)
+
+
+def _check_language(obj, errors):
+    for text in _strings(obj):
+        hangul, latin = len(_HANGUL.findall(text)), len(_LATIN.findall(text))
+        if hangul + latin >= LANGUAGE_MIN_LETTERS and hangul / (hangul + latin) < LANGUAGE_MIN_HANGUL_RATIO:
+            errors.append(
+                f"한국어가 아닌 문장이 있습니다(한글 비율 {hangul / (hangul + latin):.0%}, 앞부분: {text[:30]!r}). "
+                "같은 프롬프트로 한 번 재호출하고, 재호출 답도 같으면 repair나 번역으로 고치지 말고 "
+                "사용자에게 알립니다(SKILL.md 2단계)")
+            return  # 한 건이면 재호출 사유로 충분하다
+
+
 def check_answer(kind, text):
     """하위 에이전트의 답 원문이 끝까지 닫힌 JSON이고 규격에 맞는지 본다. 오류 문장 목록을 돌려준다.
 
@@ -118,6 +149,7 @@ def check_answer(kind, text):
     else:
         _require(obj, ("strongest_why", "weakest_why", "missed"), kind, errors)
         _check_letters(obj, kind, errors)
+    _check_language({k: obj[k] for k in ANSWER_FIELDS[kind] if k in obj}, errors)  # 규격 밖 필드는 보지 않는다
     return errors
 
 

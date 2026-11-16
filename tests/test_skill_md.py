@@ -147,6 +147,11 @@ class SkillMdTests(unittest.TestCase):
             self.assertIn("한국어", section)
             self.assertIn("재호출 규칙", section)
 
+    def test_english_answers_are_retried_and_never_repaired_or_translated(self):
+        section = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        self.assertIn("한국어가 아닌 문장", section)  # 재호출 사유이자 repair 거부 사유
+        self.assertIn("번역해서 끼워 넣지 않고", section)
+
     def test_critical_section_requires_complete_json_before_next_step_and_unsplit_review_batch(self):
         section = self.body.split("## 중요", 1)[1].split("\n## ", 1)[0]
         self.assertIn("끝이 닫힌 완결된 JSON", section)
