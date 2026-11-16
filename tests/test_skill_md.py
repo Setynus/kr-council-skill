@@ -285,7 +285,7 @@ class SkillMdTests(unittest.TestCase):
         self.assertIn("절대 경로", step5)
 
     def test_crisis_signal_stops_before_convening(self):
-        step1 = self.body.split("## 1단계", 1)[1].split("## 2단계", 1)[0]
+        step1 = self.body.split("## 1단계", 1)[1].split("\n2. ", 1)[0]
         for kw in ("위기 신호", "자해", "자살", "응급 증상", "신변", "위원회 열어줘"):
             self.assertIn(kw, step1)
         self.assertIn("소집하지 않고", step1)
@@ -293,7 +293,7 @@ class SkillMdTests(unittest.TestCase):
         self.assertIn("비용 안내", step1)
 
     def test_crisis_contacts_are_only_verified_numbers(self):
-        step1 = self.body.split("## 1단계", 1)[1].split("## 2단계", 1)[0]
+        step1 = self.body.split("## 1단계", 1)[1].split("\n2. ", 1)[0]
         self.assertIn("109", step1)
         self.assertIn("기관 종류", step1)
         # 공식 안내로 재확인하지 못한 번호는 쓰지 않는다
