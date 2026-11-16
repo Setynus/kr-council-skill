@@ -14,7 +14,8 @@ TEMPLATE = (ROOT / "kr-council-skill" / "assets" / "report.html")
 sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
 from render_report import (  # noqa: E402
-    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, _affinity_edges, make_mapping, render, validate)
+    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, _affinity_edges, _sent, make_mapping, render, split_first_sentence,
+    validate)
 
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
@@ -387,6 +388,29 @@ class ProfileTests(unittest.TestCase):
     def test_chair_name_comes_from_constant(self):
         self.assertIn(CHAIR_NAME, render(sample(), template()))
         self.assertNotIn("파파스머프", template())
+
+
+class SentenceSplitTests(unittest.TestCase):
+    def test_split_keeps_original_text(self):
+        cases = {
+            "A는 B다. C도 D다.": ("A는 B다.", " C도 D다."),
+            "끝 표시 없음": ("끝 표시 없음", ""),
+        }
+        for text, expected in cases.items():
+            self.assertEqual(split_first_sentence(text), expected)
+        for text in ("가격은 2.7만 원이다. 다음 문장.", "(1) 청구액이 3만 원 이상이다. (2) 정지가 발생했다.", ""):
+            first, rest = split_first_sentence(text)
+            self.assertEqual(first + rest, text)
+        self.assertEqual(split_first_sentence("가격은 2.7만 원이다. 다음 문장.")[0], "가격은 2.7만 원이다.")
+        self.assertEqual(split_first_sentence("(1) 청구액이 3만 원 이상이다. (2) 정지가 발생했다.")[0],
+                         "(1) 청구액이 3만 원 이상이다.")
+
+    def test_sent_escapes_and_omits_empty_rest(self):
+        out = _sent("<b>x</b>. y")
+        self.assertIn("&lt;b&gt;", out)
+        self.assertNotIn("<b>", out)
+        self.assertIn('class="rest"', out)
+        self.assertNotIn('class="rest"', _sent("한 문장"))
 
 
 class CliTests(unittest.TestCase):

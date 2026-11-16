@@ -273,6 +273,21 @@ def _e(value):
     return html.escape(str(value), quote=True)
 
 
+def split_first_sentence(text):
+    """첫 문장과 나머지로 나눈다. 글자는 바꾸지 않아 first + rest == text 이다.
+
+    shortcut: 마침표·물음표·느낌표 뒤 공백에서만 자른다. "1. 항목"처럼 번호 뒤 마침표도 문장 끝으로 본다.
+    """
+    cut = re.search(r"(?<=[.!?])\s", text)
+    return (text, "") if cut is None else (text[:cut.start()], text[cut.start():])
+
+
+def _sent(text):
+    """인쇄 3단계에서 CSS만으로 나머지를 숨길 수 있게 첫 문장을 span으로 감싼다(글자는 그대로 모두 출력)."""
+    first, rest = split_first_sentence(text)
+    return f'<span class="s1">{_e(first)}</span>' + (f'<span class="rest">{_e(rest)}</span>' if rest else "")
+
+
 def _cards(data):
     out = []
     for adv in data["advisors"]:
