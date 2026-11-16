@@ -14,7 +14,8 @@ TEMPLATE = (ROOT / "kr-council-skill" / "assets" / "report.html")
 sys.path.insert(0, str(ROOT / "kr-council-skill" / "scripts"))
 
 from render_report import (  # noqa: E402
-    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, _affinity_edges, make_mapping, render, validate)
+    ADVISOR_IDS, ADVISOR_NAMES, ADVISOR_PROFILE, CHAIR_NAME, _affinity_edges, _sent, make_mapping, render, split_first_sentence,
+    validate)
 
 DISCLAIMER = "같은 모델이 서로 다른 관점으로 낸 의견이며, 독립된 전문가 5인이 아닙니다."
 
@@ -203,9 +204,34 @@ class RenderTests(unittest.TestCase):
         self.assertIn("소수 의견 없음", html)
         self.assertNotIn("반영 안 됨", html)
 
-    def test_review_table_shows_advisor_names_not_only_letters(self):
+    def test_review_cards_show_advisor_names_not_only_letters(self):
         html = render(sample(), template())
-        self.assertIn("화가 스머프(확장가)", html.split("상호 검토", 1)[1])
+        self.assertEqual(html.count('class="review-card"'), 5)
+        self.assertIn("화가 스머프(확장가)", html.split('id="reviews"', 1)[1])
+        for advisor_id in ADVISOR_IDS:
+            self.assertIn(f'id="review-{advisor_id}"', html)
+
+    def test_verdict_uses_first_sentence_spans(self):
+        html = render(sample(), template())
+        self.assertIn('class="s1">세트 중심</span>', html)
+        d = sample()
+        d["verdict"]["agree"] = ["첫째 문장이다. 둘째 문장이다."]
+        html = render(d, template())
+        self.assertIn('<span class="s1">첫째 문장이다.</span><span class="rest"> 둘째 문장이다.</span>', html)
+
+    def test_review_slots_escape_and_do_not_resubstitute(self):
+        d = sample()
+        d["advisors"][0]["name"] = "<script>alert(1)</script>{{REVIEW_CARDS}}"
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertEqual(html.count('class="review-card"'), 5)
+
+    def test_sub_tabs_and_panels_present(self):
+        html = render(sample(), template())
+        for name in ("agree", "blind", "clash"):
+            self.assertEqual(html.count(f'data-sub="{name}"'), 1)
+            self.assertEqual(html.count(f'data-sub-panel="{name}"'), 1)
 
 
 class DashboardStructureTests(unittest.TestCase):
@@ -215,7 +241,8 @@ class DashboardStructureTests(unittest.TestCase):
         self.assertEqual(html.count('class="advisor-card"'), 5)
         for advisor_id, profile in ADVISOR_PROFILE.items():
             self.assertIn(f'href="#advisor-{advisor_id}"', html)
-            self.assertIn(profile["blurb"], html)
+            for line in profile["blurb"].split(chr(10)):
+                self.assertIn(line, html)
 
     def test_detail_panels_have_anchor_ids(self):
         html = render(sample(), template())
@@ -286,7 +313,8 @@ LETTER_OF = {v: k for k, v in MAPPING.items()}
 
 
 def svg_of(html):
-    return html[html.index("<svg"):html.index("</svg>") + len("</svg>")]
+    start = html.index('<svg viewBox="0 0 600')  # 헤더의 인쇄 아이콘 svg는 건너뛴다
+    return html[start:html.index("</svg>", start) + len("</svg>")]
 
 
 class AffinityTests(unittest.TestCase):
@@ -361,6 +389,34 @@ class AffinityTests(unittest.TestCase):
         self.assertEqual(len(_affinity_edges(d)), 10)
 
 
+class RecommendationBriefTests(unittest.TestCase):
+    def test_recommendation_rest_keeps_its_first_sentence_in_brief_mode(self):
+        d = sample()
+        d["verdict"]["recommendation"] = "세트에 집중한다. 이유는 원가다. 다만 광고는 보류한다."
+        html = render(d, template())
+        self.assertIn('<p class="rec-rest"><span class="s1">이유는 원가다.</span><span class="rest"> 다만 광고는 보류한다.</span></p>', html)
+        css = re.search(r"<style>(.*?)</style>", template(), flags=re.S).group(1)
+        self.assertNotIn(".rec-rest { display: none; }", css)
+        self.assertNotRegex(css, r'data-print-level="3"\][^{]*\.rec-rest')
+
+
+class NoticeAndLinkTests(unittest.TestCase):
+    def test_affinity_nodes_link_to_review_cards(self):
+        svg = svg_of(render(sample(), template()))
+        self.assertEqual(svg.count('class="affinity-link"'), 5)
+        self.assertEqual(svg.count('href="#review-'), 5)
+
+    def test_footer_notices_present(self):
+        html = render(sample(), template())
+        for needle in ("보고서 안내", "스킬 사용 시 주의 사항", "실행 방식", "한계 사항", "출력 방식",
+                       "조언 아님", "개인 정보", "저장 위치", "인쇄 아이콘을 누르면 위원장의 최종 검토 보고서만"):
+            self.assertIn(needle, html)
+        self.assertIn(DISCLAIMER, html)
+        self.assertIn("병렬 — 위원 5명을", html)
+        self.assertNotIn("실행 방식: 병렬", html)
+        self.assertEqual(html.count('<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM10 8.5l5 3.5-5 3.5z"/>'), 1)
+
+
 class ProfileTests(unittest.TestCase):
     def test_advisor_names_derived_from_profile(self):
         self.assertEqual(set(ADVISOR_PROFILE), set(ADVISOR_IDS))
@@ -369,11 +425,96 @@ class ProfileTests(unittest.TestCase):
     def test_blurbs_are_sentences_from_advisors_md(self):
         advisors_md = (ROOT / "kr-council-skill" / "references" / "advisors.md").read_text(encoding="utf-8")
         for advisor_id, profile in ADVISOR_PROFILE.items():
-            self.assertIn(profile["blurb"], advisors_md, advisor_id)
+            for line in profile["blurb"].split(chr(10)):
+                self.assertIn(line, advisors_md, advisor_id)
+
+    def test_blurbs_match_readme_intro(self):
+        expected = {
+            "contrarian": ["뭐든 싫다며 문제부터 짚는다", "선택이 실패할 때를 대비한 가장 그럴듯한 이유를 찾는다"],
+            "first_principles": ["진짜 목적이 뭔지, 선택지가 맞는 질문인지 부터 묻는다"],
+            "expansionist": ["큰 그림과 가능성을 그린다", "잘 풀렸을 때의 상승 여력과 인접 기회를 본다"],
+            "outsider": ["배경지식 없는 사람의 순진한 시각으로 당연한 것을 묻는다"],
+            "executor": ["일단 만들어 본다", "가장 작은 검증 단계를 본다"],
+        }
+        for advisor_id, lines in expected.items():
+            self.assertEqual(ADVISOR_PROFILE[advisor_id]["blurb"].split(chr(10)), lines)
 
     def test_chair_name_comes_from_constant(self):
         self.assertIn(CHAIR_NAME, render(sample(), template()))
         self.assertNotIn("파파스머프", template())
+
+
+class SentenceSplitTests(unittest.TestCase):
+    def test_split_keeps_original_text(self):
+        cases = {
+            "A는 B다. C도 D다.": ("A는 B다.", " C도 D다."),
+            "끝 표시 없음": ("끝 표시 없음", ""),
+        }
+        for text, expected in cases.items():
+            self.assertEqual(split_first_sentence(text), expected)
+        for text in ("가격은 2.7만 원이다. 다음 문장.", "(1) 청구액이 3만 원 이상이다. (2) 정지가 발생했다.", ""):
+            first, rest = split_first_sentence(text)
+            self.assertEqual(first + rest, text)
+        self.assertEqual(split_first_sentence("가격은 2.7만 원이다. 다음 문장.")[0], "가격은 2.7만 원이다.")
+        self.assertEqual(split_first_sentence("(1) 청구액이 3만 원 이상이다. (2) 정지가 발생했다.")[0],
+                         "(1) 청구액이 3만 원 이상이다.")
+
+    def test_sent_escapes_and_omits_empty_rest(self):
+        out = _sent("<b>x</b>. y")
+        self.assertIn("&lt;b&gt;", out)
+        self.assertNotIn("<b>", out)
+        self.assertIn('class="rest"', out)
+        self.assertNotIn('class="rest"', _sent("한 문장"))
+
+
+class DesignSystemTemplateTests(unittest.TestCase):
+    def css(self):
+        return re.search(r"<style>(.*?)</style>", template(), flags=re.S).group(1)
+
+    def script(self):
+        return DashboardBehaviorContractTests.script_blocks(template())[0]
+
+    def test_design_tokens_present(self):
+        css = self.css()
+        for name in ("--primary", "--brand", "--on-brand", "--neg", "--line"):
+            self.assertRegex(css, re.escape(name) + r"\s*:")
+        for value in ("#246beb", "#034694", "#5b96ff", "#4072b7"):
+            self.assertIn(value, css)
+
+    def test_only_regular_and_bold_weights_and_no_shadow(self):
+        css = self.css()
+        self.assertLessEqual(set(re.findall(r"font-weight:\s*(\d+)", css)), {"400", "700"})
+        self.assertNotIn("box-shadow", css)
+
+    def test_structure_order(self):
+        html = render(sample(), template())
+        marks = ['class="site-header"', 'id="question"', 'data-tab="report"', 'id="report"', 'id="advisors"',
+                 'id="affinity"', 'id="reviews"', 'id="notice"']
+        positions = [html.index(m) for m in marks]
+        self.assertEqual(positions, sorted(positions))
+        for tab in ("report", "advisors", "affinity", "reviews"):
+            self.assertEqual(html.count(f'data-tab="{tab}"'), 1)
+        self.assertEqual(html.count('class="js-only" data-all'), 2)  # 위원·검토자 "전체 보기" 버튼
+
+    def test_inactive_panels_hide_even_against_id_selectors(self):
+        """#advisors { display: flex } 같은 ID 규칙이 탭 숨김을 이기면 모든 패널이 한 화면에 보인다."""
+        self.assertRegex(self.css(), r"\.js \[data-panel\]:not\(\.is-active\)\s*\{\s*display:\s*none\s*!important")
+
+    def test_script_defines_tab_functions(self):
+        script = self.script()
+        for name in ("showTab", "showSub", "pickAdvisor", "pickReviewer"):
+            self.assertIn(name, script)
+
+    def test_print_a4_one_page_contract(self):
+        css, script, html = self.css(), self.script(), render(sample(), template())
+        self.assertIn("@page", css)
+        self.assertRegex(css, r"size:\s*A4")
+        self.assertIn("print-mode", css)
+        self.assertIn("data-print-level", css)
+        self.assertIn('[data-print-level="3"] .rest', css)
+        for needle in ("beforeprint", "afterprint", "1009"):
+            self.assertIn(needle, script)
+        self.assertIn("※ 지면 관계로 항목별 핵심만 실었습니다. 인쇄에 포함되지 않은 자세한 내용은 원본 파일을 참고하십시오.", html)
 
 
 class CliTests(unittest.TestCase):
