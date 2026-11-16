@@ -496,6 +496,10 @@ class DesignSystemTemplateTests(unittest.TestCase):
             self.assertEqual(html.count(f'data-tab="{tab}"'), 1)
         self.assertEqual(html.count('class="js-only" data-all'), 2)  # 위원·검토자 "전체 보기" 버튼
 
+    def test_inactive_panels_hide_even_against_id_selectors(self):
+        """#advisors { display: flex } 같은 ID 규칙이 탭 숨김을 이기면 모든 패널이 한 화면에 보인다."""
+        self.assertRegex(self.css(), r"\.js \[data-panel\]:not\(\.is-active\)\s*\{\s*display:\s*none\s*!important")
+
     def test_script_defines_tab_functions(self):
         script = self.script()
         for name in ("showTab", "showSub", "pickAdvisor", "pickReviewer"):

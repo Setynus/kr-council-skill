@@ -78,7 +78,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outli
 .subtabs [aria-current="true"], .subtabs [aria-pressed="true"] { border-bottom-color: var(--primary); color: var(--primary); }
 
 /* 패널 전환: JS가 있을 때만 숨긴다. 없으면 모든 내용이 보인다. */
-.js [data-panel]:not(.is-active) { display: none; }
+.js [data-panel]:not(.is-active) { display: none !important; }
 .js .sub:not(.is-active) { display: none; }
 .js #advisors:not([data-all]) .advisor-card:not(.is-active) { display: none; }
 .js #reviews:not([data-all]) .review-card:not(.is-active) { display: none; }
@@ -185,7 +185,8 @@ body.print-mode .rec-grid { grid-template-columns: 1fr 1fr; }
 body.print-mode[data-print-level="2"], body.print-mode[data-print-level="3"] {
   --fs-body: 12px; --fs-sm: 12px; --fs-rec: 14.67px; --fs-title: 14.67px; --fs-h2: 14.67px; --lh: 1.4; --pad: 8px; --gap: 8px;
 }
-body.print-mode[data-print-level="2"] main, body.print-mode[data-print-level="3"] main { padding-top: 8px; padding-bottom: 8px; }
+body.print-mode[data-print-level="2"] .sub, body.print-mode[data-print-level="3"] .sub { padding: 6px 8px; }
+body.print-mode[data-print-level="2"] .sub h3, body.print-mode[data-print-level="3"] .sub h3 { padding: 2px 10px; }
 body.print-mode[data-print-level="3"] .rest { display: none; }
 body.print-mode[data-print-level="3"] .print-note { display: block; }
 </style>
