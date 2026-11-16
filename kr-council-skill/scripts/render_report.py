@@ -320,6 +320,41 @@ def _mini_cards(data):
             f'{_e(ADVISOR_PROFILE[adv["id"]]["role"])}</a>')
     return "\n".join(out)
 
+# 푸터 안내 항목: (제목, 24px 선 아이콘 path, 본문). 아이콘은 캔버스 참조본의 noticeA/noticeB 값이다.
+_ICON_RUN = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM10 8.5l5 3.5-5 3.5z"
+_ICON_LIMIT = "M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.2v.1"
+_ICON_PRINT = "M7 8V3.5h10V8M7 17H4.5v-7.5h15V17H17M7 14h10v6.5H7z"
+_ICON_NOADVICE = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM5.6 5.6l12.8 12.8"
+_ICON_PRIVACY = "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3"
+_ICON_FOLDER = "M3 6.5h6.5l2 2.5H21v10H3z"
+NOTICE_CAUTION = [
+    ("조언 아님", _ICON_NOADVICE, "이 보고서는 세무·법률·투자 조언이 아닙니다."),
+    ("개인 정보", _ICON_PRIVACY, "비밀번호, API 키, 주민등록번호 같은 정보는 질문에 넣지 마십시오. 질문과 맥락은 하위 에이전트에게 전달됩니다."),
+    ("저장 위치", _ICON_FOLDER, "보고서는 작업 폴더의 council-reports/ 에 만들어집니다. 민감한 내용이 있으면 공유 전에 지우십시오."),
+]
+_NOTICE_CLASS = {"실행 방식": "banner", "한계 사항": "disclaimer"}  # 기존 계약: 배너·한계 문구는 항상 화면에 있다
+
+
+def _notice_about(mode):
+    run = re.sub(r"^실행 방식:\s*", "", MODE_BANNERS[mode])
+    return [
+        ("실행 방식", _ICON_RUN, run),
+        ("한계 사항", _ICON_LIMIT, DISCLAIMER + ' 위원은 같은 모델이 낸 의견이라 모델 편향을 공유합니다. '
+                               '보고서의 제도·수치에 붙은 "확인 필요" 표시는 공식 자료로 확인하십시오.'),
+        ("출력 방식", _ICON_PRINT, "인쇄 아이콘을 누르면 위원장의 최종 검토 보고서만 A4 1장으로 출력합니다. 분량이 많으면 항목별 핵심만 싣습니다."),
+    ]
+
+
+def _notices(items):
+    out = []
+    for title, path, body in items:
+        cls = _NOTICE_CLASS.get(title)
+        body_html = f'<span class="{cls}">{_e(body)}</span>' if cls else f"<span>{_e(body)}</span>"
+        out.append(
+            f'      <div class="notice-item"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">'
+            f'<path d="{_e(path)}"/></svg><div><b>{_e(title)}</b>{body_html}</div></div>')
+    return "\n".join(out)
+
 
 def _affinity_edges(data):
     """상호 검토 5개에서 방향 간선 10개를 만든다. 검토자 → 가장 강한 응답은 support, → 가장 큰 사각지대는 critique."""
@@ -372,11 +407,14 @@ def _affinity_map(data):
         (x, y), (ax, ay) = pos[advisor_id], away[advisor_id]
         anchor = "middle" if abs(ax) < 0.3 else ("start" if ax > 0 else "end")
         parts.append(
-            f'    <g class="node" data-advisor="{_e(advisor_id)}" tabindex="0">\n'
+            f'    <g class="node" data-advisor="{_e(advisor_id)}">\n'
             f'      <title>{_e(names[advisor_id])}</title>\n'
-            f'      <circle cx="{x:.1f}" cy="{y:.1f}" r="{_NODE_R}"/>\n'
-            f'      <text x="{x + ax * (_NODE_R + 12):.1f}" y="{y + ay * (_NODE_R + 12):.1f}" text-anchor="{anchor}" '
+            f'      <a class="affinity-link" href="#review-{_e(advisor_id)}" data-reviewer="{_e(advisor_id)}" '
+            f'aria-label="{_e(ADVISOR_PROFILE[advisor_id]["role"])} 위원의 상호 검토로 이동">\n'
+            f'        <circle cx="{x:.1f}" cy="{y:.1f}" r="{_NODE_R}"/>\n'
+            f'        <text x="{x + ax * (_NODE_R + 12):.1f}" y="{y + ay * (_NODE_R + 12):.1f}" text-anchor="{anchor}" '
             f'dominant-baseline="middle">{_e(ADVISOR_PROFILE[advisor_id]["role"])}</text>\n'
+            f'      </a>\n'
             f'    </g>')
 
     markers = "".join(
@@ -466,6 +504,7 @@ def render(data, template):
         "CHAIR_NAME": _e(CHAIR_NAME),
         "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
         "AFFINITY_MAP": _affinity_map(data),
+        "NOTICE_ABOUT": _notices(_notice_about(data["mode"])), "NOTICE_CAUTION": _notices(NOTICE_CAUTION),
         "REVIEW_CARDS": _review_cards(data), "REVIEW_MINI": _review_mini(data), "VERDICT": _verdict(data),
     }
     # 한 번의 치환으로 끝낸다. 값 안의 '{{...}}'가 다시 치환되지 않게 하기 위해서다.

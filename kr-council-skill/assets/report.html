@@ -253,8 +253,6 @@ th { background: var(--note-bg); }
 <main>
   <h1>{{TITLE}}</h1>
   <div class="meta">{{CREATED}}</div>
-  <div class="banner">{{MODE_BANNER}}</div>
-  <div class="disclaimer">{{DISCLAIMER}}</div>
 
   <section id="question">
     <h2>질문</h2>
@@ -298,5 +296,15 @@ th { background: var(--note-bg); }
 {{REVIEW_CARDS}}
   </section>
 </main>
+<footer id="notice">
+  <div class="notice-col">
+    <h2>보고서 안내</h2>
+{{NOTICE_ABOUT}}
+  </div>
+  <div class="notice-col">
+    <h2>스킬 사용 시 주의 사항</h2>
+{{NOTICE_CAUTION}}
+  </div>
+</footer>
 </body>
 </html>

@@ -388,6 +388,23 @@ class AffinityTests(unittest.TestCase):
         self.assertEqual(len(_affinity_edges(d)), 10)
 
 
+class NoticeAndLinkTests(unittest.TestCase):
+    def test_affinity_nodes_link_to_review_cards(self):
+        svg = svg_of(render(sample(), template()))
+        self.assertEqual(svg.count('class="affinity-link"'), 5)
+        self.assertEqual(svg.count('href="#review-'), 5)
+
+    def test_footer_notices_present(self):
+        html = render(sample(), template())
+        for needle in ("보고서 안내", "스킬 사용 시 주의 사항", "실행 방식", "한계 사항", "출력 방식",
+                       "조언 아님", "개인 정보", "저장 위치", "인쇄 아이콘을 누르면 위원장의 최종 검토 보고서만"):
+            self.assertIn(needle, html)
+        self.assertIn(DISCLAIMER, html)
+        self.assertIn("병렬 — 위원 5명을", html)
+        self.assertNotIn("실행 방식: 병렬", html)
+        self.assertEqual(html.count('<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM10 8.5l5 3.5-5 3.5z"/>'), 1)
+
+
 class ProfileTests(unittest.TestCase):
     def test_advisor_names_derived_from_profile(self):
         self.assertEqual(set(ADVISOR_PROFILE), set(ADVISOR_IDS))
