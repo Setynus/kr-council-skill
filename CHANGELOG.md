@@ -149,7 +149,9 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.1
+[0.5.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.4.0
 [0.3.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.3.1
