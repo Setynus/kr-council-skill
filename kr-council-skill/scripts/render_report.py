@@ -288,31 +288,36 @@ def _sent(text):
     return f'<span class="s1">{_e(first)}</span>' + (f'<span class="rest">{_e(rest)}</span>' if rest else "")
 
 
+def _role_lines(advisor_id):
+    """맡은 관점(README 위원 소개 문구). 줄마다 span으로 감싼다."""
+    return "".join(f"<span>{_e(line)}</span>" for line in ADVISOR_PROFILE[advisor_id]["blurb"].split("\n"))
+
+
 def _cards(data):
     out = []
     for adv in data["advisors"]:
         reasons = "".join(f"<li>{_e(r)}</li>" for r in adv["reasons"])
         out.append(
             f'    <article class="advisor-card" id="advisor-{_e(adv["id"])}" data-advisor="{_e(adv["id"])}">\n'
-            f'      <h3>{_e(adv["name"])}</h3>\n'
-            f'      <p class="position">{_e(adv["position"])}</p>\n'
+            f'      <header class="card-head"><h3>{_e(adv["name"])}</h3>'
+            f'<p class="role">{_role_lines(adv["id"])}</p></header>\n'
+            f'      <div class="position-box"><b class="lbl">판단 의견</b><p class="position">{_e(adv["position"])}</p></div>\n'
+            f'      <b class="lbl">근거</b>\n'
             f'      <ol>{reasons}</ol>\n'
-            f'      <p><span class="label">위험</span>{_e(adv["risk"])}</p>\n'
-            f'      <p><span class="label">놓치기 쉬운 점</span>{_e(adv["blindspot"])}</p>\n'
+            f'      <div class="note"><b class="lbl">위험</b><span>{_e(adv["risk"])}</span></div>\n'
+            f'      <div class="note"><b class="lbl">놓치기 쉬운 점</b><span>{_e(adv["blindspot"])}</span></div>\n'
             f'    </article>')
     return "\n".join(out)
 
 
 def _mini_cards(data):
-    """위원 소형 카드. 각 카드는 상세 패널(#advisor-<id>)로 가는 앵커다(JS가 없어도 점프한다)."""
+    """위원 하위 탭. 각 항목은 상세 카드(#advisor-<id>)로 가는 앵커다(JS가 없어도 점프한다)."""
     out = []
     for adv in data["advisors"]:
         advisor_id = _e(adv["id"])
         out.append(
-            f'    <a class="advisor-mini" href="#advisor-{advisor_id}" data-advisor="{advisor_id}">\n'
-            f'      <strong>{_e(adv["name"])}</strong>\n'
-            f'      <span>{_e(ADVISOR_PROFILE[adv["id"]]["blurb"])}</span>\n'
-            f'    </a>')
+            f'      <a class="advisor-mini" href="#advisor-{advisor_id}" data-advisor="{advisor_id}">'
+            f'{_e(ADVISOR_PROFILE[adv["id"]]["role"])}</a>')
     return "\n".join(out)
 
 
@@ -392,38 +397,62 @@ def _affinity_map(data):
         '    <p class="legend-note">선의 굵기는 점수가 아니라 이 질문에서의 검토 결과를 나타냅니다.</p>')
 
 
-def _review_table(data):
+def _review_cards(data):
     names = {a["id"]: a["name"] for a in data["advisors"]}
     mapping = data["mapping"]
 
     def who(letter):
         return f"{_e(letter)} · {_e(names[mapping[letter]])}"
 
-    rows = []
+    out = []
     for rv in data["reviews"]:
-        rows.append(
-            "      <tr>"
-            f'<td>{_e(names[rv["reviewer"]])}</td>'
-            f'<td>{who(rv["strongest"])}<br>{_e(rv["strongest_why"])}</td>'
-            f'<td>{who(rv["weakest"])}<br>{_e(rv["weakest_why"])}</td>'
-            f'<td>{_e(rv["missed"])}</td></tr>')
-    return ("    <table>\n      <tr><th>검토한 위원</th><th>가장 강한 응답</th>"
-            "<th>가장 큰 사각지대</th><th>모두가 놓친 것</th></tr>\n" + "\n".join(rows) + "\n    </table>")
+        rid = _e(rv["reviewer"])
+        out.append(
+            f'    <article class="review-card" id="review-{rid}" data-reviewer="{rid}">\n'
+            f'      <header class="card-head"><h3>{_e(names[rv["reviewer"]])}의 검토</h3>'
+            f'<p class="role">{_role_lines(rv["reviewer"])}</p></header>\n'
+            f'      <div class="strong"><b class="lbl">가장 강한 응답</b><b>{who(rv["strongest"])}</b>'
+            f'<span>{_e(rv["strongest_why"])}</span></div>\n'
+            f'      <div class="weak"><b class="lbl">가장 큰 사각지대</b><b>{who(rv["weakest"])}</b>'
+            f'<span>{_e(rv["weakest_why"])}</span></div>\n'
+            f'      <div class="missed note"><b class="lbl">모두가 놓친 것</b><span>{_e(rv["missed"])}</span></div>\n'
+            f'    </article>')
+    return "\n".join(out)
+
+
+def _review_mini(data):
+    """검토자 하위 탭. 상세 카드(#review-<id>)로 가는 앵커다."""
+    out = []
+    for rv in data["reviews"]:
+        rid = _e(rv["reviewer"])
+        out.append(
+            f'      <a class="review-mini" href="#review-{rid}" data-reviewer="{rid}">'
+            f'{_e(ADVISOR_PROFILE[rv["reviewer"]]["role"])} 검토</a>')
+    return "\n".join(out)
 
 
 def _verdict(data):
     v = data["verdict"]
-    bullets = lambda items: "<ul>" + "".join(f"<li>{_e(i)}</li>" for i in items) + "</ul>"
-    clash = "<ul>" + "".join(f'<li><strong>{_e(c["point"])}</strong> — {_e(c["sides"])}</li>'
+    items = lambda seq: "<ul>" + "".join(f"<li>{_sent(i)}</li>" for i in seq) + "</ul>"
+    clash = "<ul>" + "".join(f'<li><strong>{_e(c["point"])}</strong> — {_sent(c["sides"])}</li>'
                              for c in v["clash"]) + "</ul>"
     minority = "소수 의견 유지됨" if v["minority_kept"] else "소수 의견 없음"
+    rec_first, rec_rest = split_first_sentence(v["recommendation"])
+    rec_rest_html = f'<p class="rec-rest">{_e(rec_rest.lstrip())}</p>' if rec_rest.strip() else ""
+    panels = (("agree", "위원회가 동의하는 점", "동의하는 점", items(v["agree"])),
+              ("blind", "상호 검토에서 드러난 사각지대", "사각지대", items(v["blindspots"])),
+              ("clash", "위원회가 충돌하는 점", "충돌하는 점", clash))
+    buttons = "".join(f'<button type="button" data-sub="{key}">{short}</button>' for key, _h, short, _b in panels)
+    bodies = "\n".join(f'    <div class="sub" data-sub-panel="{key}"><h3>{head}</h3>{body}</div>'
+                       for key, head, _s, body in panels)
     return (
         f'    <div class="chips"><span>신뢰도: {_e(v["confidence"])}</span><span>{minority}</span></div>\n'
-        f'    <h3>위원회가 동의하는 점</h3>{bullets(v["agree"])}\n'
-        f'    <h3>위원회가 충돌하는 점</h3>{clash}\n'
-        f'    <h3>상호 검토에서 드러난 사각지대</h3>{bullets(v["blindspots"])}\n'
-        f'    <h3>권고</h3><p class="rec">{_e(v["recommendation"])}</p>\n'
-        f'    <h3>가장 먼저 할 한 가지</h3><p class="first">{_e(v["first_action"])}</p>')
+        f'    <div class="rec-grid">\n'
+        f'      <div class="rec"><b class="lbl">권고</b><p class="rec-first">{_e(rec_first)}</p>{rec_rest_html}</div>\n'
+        f'      <div class="first"><b class="lbl">가장 먼저 할 한 가지</b><p>{_sent(v["first_action"])}</p></div>\n'
+        f'    </div>\n'
+        f'    <div class="subtabs js-only" role="group" aria-label="최종 보고서 하위 구역">{buttons}</div>\n'
+        f'    <div class="sub-grid">\n{bodies}\n    </div>')
 
 
 def render(data, template):
@@ -437,7 +466,7 @@ def render(data, template):
         "CHAIR_NAME": _e(CHAIR_NAME),
         "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
         "AFFINITY_MAP": _affinity_map(data),
-        "REVIEW_TABLE": _review_table(data), "VERDICT": _verdict(data),
+        "REVIEW_CARDS": _review_cards(data), "REVIEW_MINI": _review_mini(data), "VERDICT": _verdict(data),
     }
     # 한 번의 치환으로 끝낸다. 값 안의 '{{...}}'가 다시 치환되지 않게 하기 위해서다.
     return re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: slots.get(m.group(1), m.group(0)), template)

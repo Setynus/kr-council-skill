@@ -280,7 +280,7 @@ th { background: var(--note-bg); }
 
   <section id="advisors">
     <h2>위원 5명</h2>
-    <div class="mini-grid">
+    <div class="subtabs">
 {{MINI_CARDS}}
     </div>
   </section>
@@ -292,9 +292,10 @@ th { background: var(--note-bg); }
 
   <section id="reviews">
     <h2>상호 검토 결과</h2>
-    <div class="table-wrap">
-{{REVIEW_TABLE}}
+    <div class="subtabs">
+{{REVIEW_MINI}}
     </div>
+{{REVIEW_CARDS}}
   </section>
 </main>
 </body>

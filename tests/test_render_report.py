@@ -204,9 +204,34 @@ class RenderTests(unittest.TestCase):
         self.assertIn("소수 의견 없음", html)
         self.assertNotIn("반영 안 됨", html)
 
-    def test_review_table_shows_advisor_names_not_only_letters(self):
+    def test_review_cards_show_advisor_names_not_only_letters(self):
         html = render(sample(), template())
-        self.assertIn("화가 스머프(확장가)", html.split("상호 검토", 1)[1])
+        self.assertEqual(html.count('class="review-card"'), 5)
+        self.assertIn("화가 스머프(확장가)", html.split('id="reviews"', 1)[1])
+        for advisor_id in ADVISOR_IDS:
+            self.assertIn(f'id="review-{advisor_id}"', html)
+
+    def test_verdict_uses_first_sentence_spans(self):
+        html = render(sample(), template())
+        self.assertIn('class="s1">세트 중심</span>', html)
+        d = sample()
+        d["verdict"]["agree"] = ["첫째 문장이다. 둘째 문장이다."]
+        html = render(d, template())
+        self.assertIn('<span class="s1">첫째 문장이다.</span><span class="rest"> 둘째 문장이다.</span>', html)
+
+    def test_review_slots_escape_and_do_not_resubstitute(self):
+        d = sample()
+        d["advisors"][0]["name"] = "<script>alert(1)</script>{{REVIEW_CARDS}}"
+        self.assertEqual(validate(d), [])
+        html = render(d, template())
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertEqual(html.count('class="review-card"'), 5)
+
+    def test_sub_tabs_and_panels_present(self):
+        html = render(sample(), template())
+        for name in ("agree", "blind", "clash"):
+            self.assertEqual(html.count(f'data-sub="{name}"'), 1)
+            self.assertEqual(html.count(f'data-sub-panel="{name}"'), 1)
 
 
 class DashboardStructureTests(unittest.TestCase):
