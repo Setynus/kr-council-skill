@@ -5,136 +5,189 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TITLE}}</title>
 <style>
+/* 전북특별자치도 디자인 시스템 토큰(라이트/다크). 색은 이 변수로만 쓴다. */
 :root {
-  --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1f; --muted: #5f6368; --line: #dcd9d0;
-  --accent: #1f5f8b; --warn-bg: #fff4d6; --warn-ink: #6b4a00; --note-bg: #e8f1f8; --crit: #b3261e;
-  --shadow: rgba(0, 0, 0, .14);
+  --bg: #f8f8f8; --elev: #ffffff; --tint: #eff5ff; --fill-alt: #f8f8f8; --ink: #1d1d1d; --muted: #555555; --line: #d8d8d8;
+  --primary: #246beb; --pfill: #246beb; --on-pfill: #ffffff; --brand: #034694; --on-brand: #ffffff; --neg: #eb003b;
+  --chip: rgba(255, 255, 255, .16);
+  --fs-h1: 32px; --fs-h2: 28px; --fs-rec: 21px; --fs-title: 19px; --fs-body: 17px; --fs-sm: 15px; --fs-cap: 15px;
+  --lh: 1.5; --pad: 24px; --gap: 24px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #17181a; --panel: #202225; --ink: #ececec; --muted: #a0a4a8; --line: #34373b;
-    --accent: #7fb8e0; --warn-bg: #3a2f10; --warn-ink: #f0d58a; --note-bg: #1f2e3a; --crit: #f2a09a;
-    --shadow: rgba(0, 0, 0, .5);
+    --bg: #0f1216; --elev: #1c2127; --tint: #263142; --fill-alt: #0f1216; --ink: #e9ebee; --muted: #adb1b8; --line: #3c4046;
+    --primary: #5b96ff; --pfill: #4072b7; --on-pfill: #fcfcfc; --brand: #4072b7; --on-brand: #fcfcfc; --neg: #ff656c;
+    --chip: rgba(0, 0, 0, .16);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #17181a; --panel: #202225; --ink: #ececec; --muted: #a0a4a8; --line: #34373b;
-  --accent: #7fb8e0; --warn-bg: #3a2f10; --warn-ink: #f0d58a; --note-bg: #1f2e3a; --crit: #f2a09a;
-  --shadow: rgba(0, 0, 0, .5);
+  --bg: #0f1216; --elev: #1c2127; --tint: #263142; --fill-alt: #0f1216; --ink: #e9ebee; --muted: #adb1b8; --line: #3c4046;
+  --primary: #5b96ff; --pfill: #4072b7; --on-pfill: #fcfcfc; --brand: #4072b7; --on-brand: #fcfcfc; --neg: #ff656c;
+  --chip: rgba(0, 0, 0, .16);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.65; overflow-wrap: anywhere; word-break: keep-all;
-  font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
-main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
-section { scroll-margin-top: 104px; }
-h1 { font-size: 1.6rem; margin: 0 0 4px; }
-h2 { font-size: 1.2rem; margin: 36px 0 12px; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
-h3 { font-size: 1.05rem; margin: 0 0 6px; color: var(--accent); }
-a:focus-visible, button:focus-visible, .node:focus-visible, .advisor-card:focus-visible {
-  outline: 3px solid var(--accent); outline-offset: 2px; }
-
-/* 스티키 헤더 */
-.site-header { position: sticky; top: 0; z-index: 10; background: var(--panel); border-bottom: 1px solid var(--line); }
-.site-header-inner { max-width: 1080px; margin: 0 auto; padding: 8px 16px; display: flex; flex-wrap: wrap;
-  align-items: center; gap: 6px 20px; }
-.site-name { font-weight: 700; color: var(--accent); text-decoration: none; }
-.site-header nav { display: flex; flex-wrap: wrap; gap: 2px 14px; flex: 1 1 auto; }
-.site-header nav a { color: var(--ink); text-decoration: none; font-size: .92rem; padding: 2px 4px; }
-.site-header nav a:hover { color: var(--accent); text-decoration: underline; }
-.btn { font: inherit; font-size: .88rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
-  border-radius: 8px; padding: 4px 12px; cursor: pointer; }
-.btn:hover { border-color: var(--accent); }
-.btn[aria-pressed="true"] { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: var(--lh); font-size: var(--fs-body);
+  overflow-wrap: anywhere; word-break: keep-all; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  font-family: 'Pretendard GOV', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px 24px 40px; display: flex; flex-direction: column; gap: 24px; }
+section { scroll-margin-top: 88px; }
+h1, h2, h3, p { margin: 0; }
+h2 { font-size: var(--fs-h2); line-height: 1.4; font-weight: 700; }
+h3 { font-size: var(--fs-title); line-height: 1.45; font-weight: 700; }
+b, strong { font-weight: 700; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .js-only { display: none; }
-.js .header-actions, .js .hero-tabs { display: flex; gap: 8px; }
+.js .js-only { display: inline-flex; }
 
-.meta { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
-.banner { padding: 10px 14px; border-radius: 8px; background: var(--note-bg); margin-bottom: 8px; }
-.disclaimer { padding: 10px 14px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-ink); font-size: .92rem; }
-.question { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; white-space: pre-wrap; }
+/* 스티키 헤더(화면 전용) */
+.site-header { position: sticky; top: 0; z-index: 10; background: var(--brand); color: var(--on-brand); }
+.site-header-inner { max-width: 1280px; margin: 0 auto; padding: 8px 24px; display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: space-between; gap: 8px 16px; }
+.site-title { display: block; font-size: var(--fs-title); line-height: 1.45; font-weight: 700; }
+.site-sub { display: block; font-size: var(--fs-cap); line-height: 1.4; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.meta { font-size: var(--fs-cap); line-height: 1.4; font-weight: 700; padding: 6px 12px; }
+.switch, .icon-btn { font: inherit; color: var(--on-brand); cursor: pointer; border: 0; min-height: 44px; align-items: center; }
+.switch { gap: 10px; padding: 0 8px; background: transparent; border-radius: 8px; font-size: 15px; font-weight: 700; }
+.track { position: relative; display: inline-block; width: 44px; height: 24px; border: 2px solid var(--on-brand); border-radius: 12px; }
+.thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--on-brand); }
+.switch[aria-checked="true"] .track { background: var(--on-brand); }
+.switch[aria-checked="true"] .thumb { left: 22px; background: var(--brand); }
+.icon-btn { justify-content: center; width: 44px; padding: 0; border-radius: 8px; background: var(--chip); }
 
-/* 위원장 카드(가장 큼) */
-.verdict { background: var(--panel); border: 2px solid var(--accent); border-radius: 12px; padding: 18px 20px; }
-.hero { padding: 24px 26px; margin-top: 28px; border-width: 3px; }
-.hero > h2 { margin-top: 0; font-size: 1.45rem; }
-.verdict h3 { margin-top: 18px; }
-.verdict ul { margin: 6px 0; padding-left: 20px; }
-.rec { font-size: 1.05rem; font-weight: 700; }
-.first { background: var(--note-bg); border-radius: 8px; padding: 10px 14px; font-weight: 700; }
-.chips span { display: inline-block; margin: 0 8px 6px 0; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: .88rem; }
-.hero-tabs { margin: 0 0 14px; }
-/* JS가 있을 때만 전환: 위원장 보고서 ↔ 위원 판단(선택된 위원 1명) */
-.js .hero:not([data-view="advisors"]) .pane-advisors { display: none; }
-.js .hero[data-view="advisors"] .pane-report { display: none; }
-.js .pane-advisors .advisor-card { display: none; }
-.js .pane-advisors .advisor-card.is-active { display: block; }
-.js .pane-advisors .grid { grid-template-columns: 1fr; }
-.pane-advisors > h3 { margin-top: 0; }
+/* 히어로(안건) */
+.hero-card { display: flex; flex-direction: column; gap: 16px; padding: 32px; border-radius: 12px; background: var(--brand); color: var(--on-brand); }
+.chip { align-self: flex-start; padding: 4px 12px; border-radius: 6px; background: var(--chip); font-size: var(--fs-cap); font-weight: 700; }
+.hero-card h1 { font-size: var(--fs-h1); line-height: 1.3; font-weight: 700; }
+.hero-card .question { white-space: pre-wrap; }
 
-.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.advisor-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-.advisor-card .position { font-weight: 700; margin: 0 0 8px; }
-.advisor-card ol { margin: 0 0 8px; padding-left: 20px; }
-.advisor-card p { margin: 6px 0; }
-.label { color: var(--muted); font-size: .85rem; font-weight: 700; margin-right: 4px; }
+/* 상위 탭 */
+.tabs { display: none; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: 4px; padding: 6px; border-radius: 8px; background: var(--tint); }
+.js .tabs.js-only { display: grid; }
+.tabs button { min-height: 48px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--ink);
+  font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--pfill); color: var(--on-pfill); }
 
-/* 위원 소형 카드 */
-.mini-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.advisor-mini { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-  padding: 12px 14px; color: inherit; text-decoration: none; }
-.advisor-mini strong { display: block; color: var(--accent); }
-.advisor-mini span { display: block; font-size: .88rem; color: var(--muted); }
-.advisor-mini.is-selected { border-color: var(--accent); border-width: 2px; padding: 11px 13px; }
-.advisor-mini, .hero { transition: transform .15s ease, box-shadow .15s ease; }
-.advisor-mini:hover, .advisor-mini:focus-visible, .hero:hover { transform: translateY(-2px); box-shadow: 0 6px 16px var(--shadow); }
+/* 하위 탭(밑줄형) */
+.subtabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.js .subtabs.js-only { display: flex; }
+.subtabs button, .subtabs a { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 48px; padding: 0 16px; border: 0;
+  border-bottom: 3px solid transparent; background: transparent; color: var(--ink); font: inherit; font-size: 17px; font-weight: 700;
+  text-decoration: none; cursor: pointer; }
+.subtabs [aria-current="true"], .subtabs [aria-pressed="true"] { border-bottom-color: var(--primary); color: var(--primary); }
+
+/* 패널 전환: JS가 있을 때만 숨긴다. 없으면 모든 내용이 보인다. */
+.js [data-panel]:not(.is-active) { display: none; }
+.js .sub:not(.is-active) { display: none; }
+.js #advisors:not([data-all]) .advisor-card:not(.is-active) { display: none; }
+.js #reviews:not([data-all]) .review-card:not(.is-active) { display: none; }
+.js .cards { grid-template-columns: minmax(0, 860px); }
+.js [data-all] .cards { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); }
+
+/* 위원장 보고서 */
+.verdict { display: flex; flex-direction: column; gap: var(--gap); padding: var(--pad); background: var(--elev); border: 1px solid var(--line); border-radius: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips span { padding: 4px 12px; border-radius: 6px; background: var(--tint); font-size: var(--fs-cap); font-weight: 700; }
+.rec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: var(--gap); }
+.rec, .first { display: flex; flex-direction: column; gap: 10px; padding: var(--pad); border-radius: 10px; }
+.rec { background: var(--tint); }
+.first { background: var(--fill-alt); border: 1px solid var(--line); }
+.lbl { display: block; font-size: var(--fs-cap); line-height: 1.4; color: var(--muted); font-weight: 700; }
+.rec-first { font-size: var(--fs-rec); line-height: 1.4; font-weight: 700; }
+.first p { font-weight: 700; }
+.sub-grid { display: flex; flex-direction: column; gap: var(--gap); max-width: 860px; }
+.sub { display: flex; flex-direction: column; gap: 8px; }
+.sub h3 { padding: 4px 10px; }
+.sub ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.print-note { display: none; font-size: var(--fs-cap); color: var(--muted); padding-top: 8px; border-top: 1px solid var(--line); }
+
+/* 위원·검토 카드 */
+#advisors, #reviews { display: flex; flex-direction: column; gap: 12px; }
+.cards { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); }
+.advisor-card, .review-card { display: flex; flex-direction: column; gap: 14px; padding: var(--pad); background: var(--elev); border: 1px solid var(--line); border-radius: 10px; }
+.card-head { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.role { display: flex; flex-direction: column; font-size: var(--fs-sm); line-height: 1.5; color: var(--muted); }
+.position-box, .strong { display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: var(--tint); border-left: 4px solid var(--primary); border-radius: 8px; }
+.position { font-size: var(--fs-sm); line-height: 1.55; font-weight: 700; }
+.advisor-card ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); line-height: 1.55; }
+.note, .weak { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; background: var(--fill-alt); border: 1px solid var(--line); border-radius: 8px; font-size: var(--fs-sm); line-height: 1.55; }
+.weak { border-left: 4px solid var(--neg); }
+.strong span, .weak span { font-size: var(--fs-sm); line-height: 1.55; }
 
 /* 상성 지도 */
-.affinity-wrap svg { width: 100%; height: auto; display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
-.affinity-wrap .node circle { fill: var(--accent); }
-.affinity-wrap .node text { fill: var(--ink); font-size: 14px; font-weight: 700; }
-.edge { transition: opacity .15s ease; }
-.edge.support { stroke: var(--accent); }
-.edge.critique { stroke: var(--crit); }
+#affinity { display: flex; flex-direction: column; gap: 14px; padding: var(--pad); background: var(--elev); border: 1px solid var(--line); border-radius: 10px; }
+.affinity-wrap { width: 100%; max-width: 600px; margin: 0 auto; }
+.affinity-wrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+.affinity-wrap .node circle { fill: var(--ink); stroke: var(--bg); stroke-width: 3; }
+.affinity-link { cursor: pointer; }
+.affinity-link text { fill: var(--primary); font-size: 15px; font-weight: 700; text-decoration: underline; }
+.affinity-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.edge.support { stroke: var(--primary); }
+.edge.critique { stroke: var(--neg); }
 .affinity-wrap.focus .edge:not(.is-related) { opacity: .15; }
-.arrow.support path { fill: var(--accent); }
-.arrow.critique path { fill: var(--crit); }
-.legend { list-style: none; margin: 10px 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .9rem; }
-.swatch { display: inline-block; width: 28px; vertical-align: middle; margin-right: 6px; border-top: 2px solid var(--accent); }
-.swatch.critique { border-top: 2px dashed var(--crit); }
-.swatch.mutual { border-top: 4px solid var(--accent); }
-.legend-note { margin: 0; color: var(--muted); font-size: .85rem; }
+.arrow.support path { fill: var(--primary); }
+.arrow.critique path { fill: var(--neg); }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; font-size: var(--fs-sm); }
+.swatch { display: inline-block; width: 28px; vertical-align: middle; margin-right: 8px; border-top: 2px solid var(--primary); }
+.swatch.critique { border-top: 2px dashed var(--neg); }
+.swatch.mutual { border-top: 4px solid var(--primary); }
+.legend-note { text-align: center; color: var(--muted); font-size: var(--fs-cap); }
 
-.table-wrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; min-width: 640px; background: var(--panel); font-size: .92rem; }
-th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-th { background: var(--note-bg); }
+/* 푸터 안내(화면 전용) */
+#notice { background: var(--brand); color: var(--on-brand); padding: 32px 24px 40px; display: grid; gap: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.notice-col { max-width: 620px; justify-self: center; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+.notice-col h2 { font-size: var(--fs-title); line-height: 1.5; }
+.notice-item { display: flex; align-items: flex-start; gap: 12px; }
+.notice-item svg { flex: 0 0 auto; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.notice-item div { display: flex; flex-direction: column; gap: 4px; }
+.notice-item span { font-size: var(--fs-sm); line-height: 1.5; }
 
 @media (max-width: 600px) {
-  .affinity-wrap .node text { font-size: 18px; }
+  main { padding: 16px; }
+  .hero-card { padding: 20px; }
+  .affinity-link text { font-size: 18px; }
 }
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .advisor-mini, .hero, .edge { transition: none; }
-  .advisor-mini:hover, .advisor-mini:focus-visible, .hero:hover { transform: none; }
 }
 
-/* 인쇄: 밝은 테마 고정, 헤더·버튼·소형 카드 숨김, 위원 상세와 검토 표를 모두 펼친다 */
+/* 인쇄 1: JS가 없거나 실패했을 때. 헤더·푸터·버튼만 빼고 모든 내용을 라이트 값으로 펼쳐 인쇄한다. */
+@page { size: A4 portrait; margin: 0; }
 @media print {
   :root, :root[data-theme], :root:not([data-theme="light"]) {
-    --bg: #ffffff; --panel: #ffffff; --ink: #000000; --muted: #444444; --line: #bbbbbb;
-    --accent: #1f5f8b; --warn-bg: #fff4d6; --warn-ink: #6b4a00; --note-bg: #e8f1f8; --crit: #b3261e;
-    --shadow: transparent;
+    --bg: #ffffff; --elev: #ffffff; --tint: #eff5ff; --fill-alt: #f8f8f8; --ink: #1d1d1d; --muted: #555555; --line: #616174;
+    --primary: #246beb; --brand: #034694; --neg: #eb003b;
   }
-  body { background: #fff; color: #000; }
-  .site-header, .js-only, #advisors { display: none !important; }
-  .js .hero .pane { display: block !important; }
-  .js .pane-advisors .advisor-card { display: block !important; }
-  .js .pane-advisors .grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-  .hero { transform: none !important; box-shadow: none !important; }
-  .advisor-card, .verdict, table, .affinity-wrap { break-inside: avoid; }
+  main { padding: 40px 45px; }
+  .site-header, .js-only, #notice, .tabs, .subtabs { display: none !important; }
+  .advisor-card, .review-card, .verdict, .affinity-wrap { break-inside: avoid; }
 }
+
+/* 인쇄 2: JS가 beforeprint에서 body.print-mode를 붙이면 위원장 보고서만 A4 1장으로 맞춘다. 화면에서도 같은 배치로 높이를 잰다. */
+body.print-mode {
+  --bg: #ffffff; --elev: #ffffff; --tint: #eff5ff; --fill-alt: #f8f8f8; --ink: #1d1d1d; --muted: #555555; --line: #616174;
+  --primary: #246beb; --pfill: #246beb; --on-pfill: #ffffff; --brand: #034694; --on-brand: #ffffff; --neg: #eb003b;
+  --fs-h1: 21.33px; --fs-h2: 16px; --fs-rec: 16px; --fs-title: 16px; --fs-body: 12.67px; --fs-sm: 12px; --fs-cap: 10.67px;
+  --lh: 1.5; --pad: 12px; --gap: 12px;
+  width: 794px; margin: 0 auto; background: #fff; color: var(--ink);
+}
+body.print-mode .site-header, body.print-mode #question, body.print-mode .tabs, body.print-mode #notice,
+body.print-mode .js-only, body.print-mode #advisors, body.print-mode #affinity, body.print-mode #reviews { display: none !important; }
+body.print-mode main { max-width: none; min-height: 1120px; padding: 57px 45px; justify-content: center; }
+body.print-mode #report { display: flex !important; }
+body.print-mode .sub { display: flex !important; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+body.print-mode .sub h3 { background: var(--tint); border-left: 4px solid var(--primary); }
+body.print-mode .sub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); max-width: none; }
+body.print-mode .rec { border: 1px solid var(--line); }
+body.print-mode .rec-grid { grid-template-columns: 1fr 1fr; }
+body.print-mode[data-print-level="2"], body.print-mode[data-print-level="3"] {
+  --fs-body: 12px; --fs-sm: 12px; --fs-rec: 14.67px; --fs-title: 14.67px; --fs-h2: 14.67px; --lh: 1.4; --pad: 8px; --gap: 8px;
+}
+body.print-mode[data-print-level="2"] main, body.print-mode[data-print-level="3"] main { padding-top: 8px; padding-bottom: 8px; }
+body.print-mode[data-print-level="3"] .rest, body.print-mode[data-print-level="3"] .rec-rest { display: none; }
+body.print-mode[data-print-level="3"] .print-note { display: block; }
 </style>
 </head>
 <body id="top">
@@ -155,49 +208,72 @@ th { background: var(--note-bg); }
 
   function init() {
     var all = function (selector) { return Array.prototype.slice.call(document.querySelectorAll(selector)); };
-    var hero = document.getElementById('report');
-    var cards = all('.advisor-card');
-    var minis = all('.advisor-mini');
-    var tabs = all('.hero-tabs button');
-    var current = null;
+    var smooth = function () { return media('(prefers-reduced-motion: reduce)') ? 'auto' : 'smooth'; };
 
-    function setView(view) {
-      if (!hero) { return; }
-      hero.setAttribute('data-view', view);
-      tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-show') === view)); });
+    // 상위 탭: data-tab 버튼과 data-panel 구역만 읽고 바꾼다(위원 텍스트는 다루지 않는다).
+    function showTab(name) {
+      all('[data-panel]').forEach(function (p) { p.classList.toggle('is-active', p.getAttribute('data-panel') === name); });
+      all('[data-tab]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tab') === name)); });
     }
-    function select(id) {
-      current = id;
-      cards.forEach(function (c) { c.classList.toggle('is-active', c.getAttribute('data-advisor') === id); });
-      minis.forEach(function (m) {
-        if (m.getAttribute('data-advisor') === id) { m.setAttribute('aria-current', 'true'); m.classList.add('is-selected'); }
-        else { m.removeAttribute('aria-current'); m.classList.remove('is-selected'); }
+    // 최종 보고서 하위 탭
+    function showSub(name) {
+      all('[data-sub-panel]').forEach(function (p) { p.classList.toggle('is-active', p.getAttribute('data-sub-panel') === name); });
+      all('[data-sub]').forEach(function (b) {
+        if (b.getAttribute('data-sub') === name) { b.setAttribute('aria-current', 'true'); } else { b.removeAttribute('aria-current'); }
       });
     }
-    setView('report');
+    // 위원·검토자 선택: id 또는 'all'(전체 보기)
+    function pick(sectionId, cardSelector, miniSelector, attr, id) {
+      var section = document.getElementById(sectionId);
+      if (!section) { return; }
+      if (id === 'all') { section.setAttribute('data-all', ''); } else { section.removeAttribute('data-all'); }
+      all(cardSelector).forEach(function (c) { c.classList.toggle('is-active', c.getAttribute(attr) === id); });
+      all(miniSelector).forEach(function (m) {
+        if (m.getAttribute(attr) === id) { m.setAttribute('aria-current', 'true'); } else { m.removeAttribute('aria-current'); }
+      });
+      var allBtn = section.querySelector('button[data-all]');
+      if (allBtn) { allBtn.setAttribute('aria-pressed', String(id === 'all')); }
+    }
+    function pickAdvisor(id) { pick('advisors', '.advisor-card', '.advisor-mini', 'data-advisor', id); }
+    function pickReviewer(id) { pick('reviews', '.review-card', '.review-mini', 'data-reviewer', id); }
 
-    minis.forEach(function (m) {
-      m.addEventListener('click', function (event) {
+    all('[data-tab]').forEach(function (b) {
+      b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
+    });
+    all('[data-sub]').forEach(function (b) {
+      b.addEventListener('click', function () { showSub(b.getAttribute('data-sub')); });
+    });
+    all('.advisor-mini').forEach(function (m) {
+      m.addEventListener('click', function (event) { event.preventDefault(); pickAdvisor(m.getAttribute('data-advisor')); });
+    });
+    all('.review-mini').forEach(function (m) {
+      m.addEventListener('click', function (event) { event.preventDefault(); pickReviewer(m.getAttribute('data-reviewer')); });
+    });
+    var advAll = document.querySelector('#advisors button[data-all]');
+    if (advAll) { advAll.addEventListener('click', function () { pickAdvisor('all'); }); }
+    var revAll = document.querySelector('#reviews button[data-all]');
+    if (revAll) { revAll.addEventListener('click', function () { pickReviewer('all'); }); }
+    // 상성 지도: 위원을 누르면 상호 검토 탭의 해당 검토자로 이동한다(JS가 없으면 #review-<id> 앵커로 이동한다).
+    all('.affinity-link').forEach(function (a) {
+      a.addEventListener('click', function (event) {
         event.preventDefault();
-        var id = m.getAttribute('data-advisor');
-        select(id);
-        setView('advisors');
-        if (hero) { hero.scrollIntoView({ behavior: media('(prefers-reduced-motion: reduce)') ? 'auto' : 'smooth', block: 'start' }); }
-        var card = document.getElementById('advisor-' + id);
-        if (card) { card.setAttribute('tabindex', '-1'); card.focus({ preventScroll: true }); }
+        showTab('reviews');
+        pickReviewer(a.getAttribute('data-reviewer'));
+        var target = document.getElementById('reviews');
+        if (target) { target.scrollIntoView({ behavior: smooth(), block: 'start' }); }
       });
     });
-    tabs.forEach(function (b) {
-      b.addEventListener('click', function () {
-        var view = b.getAttribute('data-show');
-        if (view === 'advisors' && !current && cards.length) { select(cards[0].getAttribute('data-advisor')); }
-        setView(view);
-      });
-    });
+
+    var firstAdvisor = document.querySelector('.advisor-card');
+    var firstReview = document.querySelector('.review-card');
+    showTab('report');
+    showSub('agree');
+    if (firstAdvisor) { pickAdvisor(firstAdvisor.getAttribute('data-advisor')); }
+    if (firstReview) { pickReviewer(firstReview.getAttribute('data-reviewer')); }
 
     var themeButton = document.getElementById('theme-toggle');
     function currentTheme() { return root.getAttribute('data-theme') || (media('(prefers-color-scheme: dark)') ? 'dark' : 'light'); }
-    function syncThemeButton() { if (themeButton) { themeButton.setAttribute('aria-pressed', String(currentTheme() === 'dark')); } }
+    function syncThemeButton() { if (themeButton) { themeButton.setAttribute('aria-checked', String(currentTheme() === 'dark')); } }
     if (themeButton) {
       themeButton.addEventListener('click', function () {
         var next = currentTheme() === 'dark' ? 'light' : 'dark';
@@ -208,6 +284,27 @@ th { background: var(--note-bg); }
     }
     syncThemeButton();
 
+    // 인쇄: 위원장 보고서만 A4 1장. 아이콘 버튼과 Ctrl+P가 같은 beforeprint 경로를 탄다.
+    // 단계 1=전체, 2=간격·글자 축소, 3=항목별 첫 문장만(.rest를 CSS로 숨김, 글자는 바꾸지 않는다). 가용 높이 1123-114=1009px.
+    var PRINT_LIMIT = 1009;
+    function fitPrint() {
+      var report = document.getElementById('report');
+      var level = 1;
+      for (; level <= 3; level++) {
+        document.body.setAttribute('data-print-level', String(level));
+        if (!report || report.offsetHeight <= PRINT_LIMIT) { break; }
+      }
+      if (level > 3) { level = 3; document.body.setAttribute('data-print-level', '3'); }
+      return level;
+    }
+    window.addEventListener('beforeprint', function () {
+      document.body.classList.add('print-mode');
+      try { fitPrint(); } catch (e) { document.body.classList.remove('print-mode'); }
+    });
+    window.addEventListener('afterprint', function () {
+      document.body.classList.remove('print-mode');
+      document.body.removeAttribute('data-print-level');
+    });
     var printButton = document.getElementById('print-btn');
     if (printButton) { printButton.addEventListener('click', function () { window.print(); }); }
 
@@ -223,77 +320,75 @@ th { background: var(--note-bg); }
     all('.node').forEach(function (n) {
       var id = n.getAttribute('data-advisor');
       n.addEventListener('mouseenter', function () { focusNode(id); });
-      n.addEventListener('focus', function () { focusNode(id); });
+      n.addEventListener('focusin', function () { focusNode(id); });
       n.addEventListener('mouseleave', function () { focusNode(null); });
-      n.addEventListener('blur', function () { focusNode(null); });
+      n.addEventListener('focusout', function () { focusNode(null); });
     });
   }
 
-  // init이 실패하면 JS 없는 배치로 되돌린다. 위원 상세가 CSS로 숨겨진 채 남지 않게 한다.
+  // init이 실패하면 JS 없는 배치로 되돌린다. 탭 때문에 숨겨진 내용이 남지 않게 한다.
   function safeInit() { try { init(); } catch (e) { root.classList.remove('js'); } }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', safeInit); } else { safeInit(); }
 })();
 </script>
 <header class="site-header">
   <div class="site-header-inner">
-    <a class="site-name" href="#top">kr-council-skill</a>
-    <nav aria-label="보고서 바로가기">
-      <a href="#question">질문</a>
-      <a href="#report">최종 보고서</a>
-      <a href="#advisors">위원</a>
-      <a href="#affinity">상성 지도</a>
-      <a href="#reviews">검토 표</a>
-    </nav>
-    <div class="header-actions js-only">
-      <button type="button" class="btn" id="theme-toggle" aria-pressed="false">다크 모드</button>
-      <button type="button" class="btn" id="print-btn">인쇄</button>
+    <div>
+      <b class="site-title">위원회 최종 검토 보고서</b>
+      <span class="site-sub">kr-council-skill · 위원 5명 검토</span>
+    </div>
+    <div class="header-actions">
+      <span class="meta">{{CREATED}}</span>
+      <button type="button" class="switch js-only" id="theme-toggle" role="switch" aria-checked="false"><span>다크 모드</span><span class="track" aria-hidden="true"><span class="thumb"></span></span></button>
+      <button type="button" class="icon-btn js-only" id="print-btn" aria-label="인쇄" title="인쇄"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3.5h10V8M7 17H4.5v-7.5h15V17H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
 </header>
 <main>
-  <h1>{{TITLE}}</h1>
-  <div class="meta">{{CREATED}}</div>
-
-  <section id="question">
-    <h2>질문</h2>
-    <div class="question">{{QUESTION}}</div>
+  <section id="question" class="hero-card">
+    <span class="chip">위원회 안건</span>
+    <h1>{{TITLE}}</h1>
+    <p class="question">{{QUESTION}}</p>
   </section>
 
-  <section class="verdict hero" id="report">
+  <nav class="tabs js-only" aria-label="보고서 구역">
+    <button type="button" data-tab="report" aria-pressed="true">최종 보고서</button>
+    <button type="button" data-tab="advisors" aria-pressed="false">위원 5명</button>
+    <button type="button" data-tab="affinity" aria-pressed="false">상성 지도</button>
+    <button type="button" data-tab="reviews" aria-pressed="false">상호 검토</button>
+  </nav>
+
+  <section class="verdict hero" id="report" data-panel="report">
     <h2>{{CHAIR_NAME}}(위원장)의 최종 검토 보고서</h2>
-    <div class="hero-tabs js-only" role="group" aria-label="보기 전환">
-      <button type="button" class="btn" data-show="report" aria-pressed="true">위원장 보고서</button>
-      <button type="button" class="btn" data-show="advisors" aria-pressed="false">위원 판단</button>
-    </div>
-    <div class="pane pane-report" data-pane="report">
 {{VERDICT}}
-    </div>
-    <div class="pane pane-advisors" data-pane="advisors">
-      <h3>위원 5명의 판단</h3>
-      <div class="grid">
-{{ADVISOR_CARDS}}
-      </div>
-    </div>
+    <p class="print-note">※ 지면 관계로 항목별 핵심만 실었습니다. 인쇄에 포함되지 않은 자세한 내용은 원본 파일을 참고하십시오.</p>
   </section>
 
-  <section id="advisors">
-    <h2>위원 5명</h2>
-    <div class="subtabs">
+  <section id="advisors" data-panel="advisors">
+    <h2>위원 5명의 판단</h2>
+    <div class="subtabs" role="group" aria-label="위원 선택">
 {{MINI_CARDS}}
+      <button type="button" class="js-only" data-all aria-pressed="false">전체 보기</button>
+    </div>
+    <div class="cards">
+{{ADVISOR_CARDS}}
     </div>
   </section>
 
-  <section id="affinity">
+  <section id="affinity" data-panel="affinity">
     <h2>상성 지도</h2>
 {{AFFINITY_MAP}}
   </section>
 
-  <section id="reviews">
+  <section id="reviews" data-panel="reviews">
     <h2>상호 검토 결과</h2>
-    <div class="subtabs">
+    <div class="subtabs" role="group" aria-label="검토자 선택">
 {{REVIEW_MINI}}
+      <button type="button" class="js-only" data-all aria-pressed="false">전체 보기</button>
     </div>
+    <div class="cards">
 {{REVIEW_CARDS}}
+    </div>
   </section>
 </main>
 <footer id="notice">

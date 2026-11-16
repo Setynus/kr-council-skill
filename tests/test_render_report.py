@@ -313,7 +313,8 @@ LETTER_OF = {v: k for k, v in MAPPING.items()}
 
 
 def svg_of(html):
-    return html[html.index("<svg"):html.index("</svg>") + len("</svg>")]
+    start = html.index('<svg viewBox="0 0 600')  # 헤더의 인쇄 아이콘 svg는 건너뛴다
+    return html[start:html.index("</svg>", start) + len("</svg>")]
 
 
 class AffinityTests(unittest.TestCase):
@@ -453,6 +454,52 @@ class SentenceSplitTests(unittest.TestCase):
         self.assertNotIn("<b>", out)
         self.assertIn('class="rest"', out)
         self.assertNotIn('class="rest"', _sent("한 문장"))
+
+
+class DesignSystemTemplateTests(unittest.TestCase):
+    def css(self):
+        return re.search(r"<style>(.*?)</style>", template(), flags=re.S).group(1)
+
+    def script(self):
+        return DashboardBehaviorContractTests.script_blocks(template())[0]
+
+    def test_design_tokens_present(self):
+        css = self.css()
+        for name in ("--primary", "--brand", "--on-brand", "--neg", "--line"):
+            self.assertRegex(css, re.escape(name) + r"\s*:")
+        for value in ("#246beb", "#034694", "#5b96ff", "#4072b7"):
+            self.assertIn(value, css)
+
+    def test_only_regular_and_bold_weights_and_no_shadow(self):
+        css = self.css()
+        self.assertLessEqual(set(re.findall(r"font-weight:\s*(\d+)", css)), {"400", "700"})
+        self.assertNotIn("box-shadow", css)
+
+    def test_structure_order(self):
+        html = render(sample(), template())
+        marks = ['class="site-header"', 'id="question"', 'data-tab="report"', 'id="report"', 'id="advisors"',
+                 'id="affinity"', 'id="reviews"', 'id="notice"']
+        positions = [html.index(m) for m in marks]
+        self.assertEqual(positions, sorted(positions))
+        for tab in ("report", "advisors", "affinity", "reviews"):
+            self.assertEqual(html.count(f'data-tab="{tab}"'), 1)
+        self.assertEqual(html.count('class="js-only" data-all'), 2)  # 위원·검토자 "전체 보기" 버튼
+
+    def test_script_defines_tab_functions(self):
+        script = self.script()
+        for name in ("showTab", "showSub", "pickAdvisor", "pickReviewer"):
+            self.assertIn(name, script)
+
+    def test_print_a4_one_page_contract(self):
+        css, script, html = self.css(), self.script(), render(sample(), template())
+        self.assertIn("@page", css)
+        self.assertRegex(css, r"size:\s*A4")
+        self.assertIn("print-mode", css)
+        self.assertIn("data-print-level", css)
+        self.assertIn('[data-print-level="3"] .rest', css)
+        for needle in ("beforeprint", "afterprint", "1009"):
+            self.assertIn(needle, script)
+        self.assertIn("※ 지면 관계로 항목별 핵심만 실었습니다. 인쇄에 포함되지 않은 자세한 내용은 원본 파일을 참고하십시오.", html)
 
 
 class CliTests(unittest.TestCase):
