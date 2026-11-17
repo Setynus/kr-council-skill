@@ -725,7 +725,7 @@ def _main(argv=None):
     if args.cmd == "facts-block":
         try:
             facts = json.loads(Path(args.facts_path).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except (OSError, ValueError) as exc:  # JSONDecodeError와 UTF-8 해독 오류(UnicodeDecodeError)는 ValueError다
             print(f"사실 블록을 만들 수 없습니다:\n{args.facts_path}: {exc}", file=sys.stderr)
             return VALIDATION_ERROR_EXIT
         errors = []

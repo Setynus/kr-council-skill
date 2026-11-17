@@ -888,5 +888,53 @@ class FactsBlockTests(unittest.TestCase):
             self.assertIn("가격은 <10만원> & 부가세 별도", text)
 
 
+class FactsHandoffExamplesTests(unittest.TestCase):
+    """인계서 부록 B의 최소 예시와, 대화에서 건너뛸 때 남기는 최소 모양이 검증·렌더·facts-block을 모두 통과한다."""
+
+    APPENDIX_B = {
+        "status": "checked", "checked_at": "2026-11-17", "reason": "시행 중인 기준의 현재 내용 확인이 필요함",
+        "queries": ["예시 검색어"],
+        "items": [
+            {"claim": "예시 사실: 해당 기준은 2026년 중 개정되어 현재 개정본이 시행 중이다.",
+             "source": "https://example.go.kr/notice/1", "source_label": "예시 부처 공지", "confirmed": True,
+             "note": "개정 전 기준과 혼동 주의"},
+            {"claim": "예시 사실: 세부 시행일은 확인하지 못했다.", "confirmed": False, "note": "미확인(기준: 2026-11-17)"},
+        ],
+    }
+
+    def _block(self, facts):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "facts.json"
+            path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+            return subprocess.run([sys.executable, str(SCRIPT), "facts-block", str(path)], capture_output=True)
+
+    def test_appendix_b_example_passes_everywhere_with_one_link(self):
+        self.assertEqual(facts_errors(self.APPENDIX_B), [])
+        run = self._block(self.APPENDIX_B)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn(b"F2.", run.stdout)
+        html = facts_html(self.APPENDIX_B)
+        body = html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+        self.assertEqual(body.count("<a "), 1)
+
+    def test_minimal_skipped_and_unavailable_shapes_pass(self):
+        for status, stdout_empty in (("skipped", True), ("unavailable", False)):
+            facts = {"status": status, "checked_at": "2026-11-17", "reason": "사유"}
+            run = self._block(facts)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertEqual(run.stdout == b"", stdout_empty)
+            d = sample()
+            d["facts"] = facts
+            self.assertEqual(validate(d), [])
+
+    def test_facts_block_with_undecodable_bytes_exits_2_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "facts.json"
+            path.write_bytes(b'{"status": "' + bytes([0xFF, 0xFE]) + b'"}')
+            run = subprocess.run([sys.executable, str(SCRIPT), "facts-block", str(path)], capture_output=True)
+            self.assertEqual(run.returncode, 2)
+            self.assertNotIn(b"Traceback", run.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

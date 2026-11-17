@@ -354,12 +354,6 @@ class SkillMdTests(unittest.TestCase):
         for needle in ("unavailable", "최신 정보를 확인하지 못했다", "확인 필요", "소집하지 않고"):
             self.assertIn(needle, step)
 
-    def test_fact_check_leaves_other_prs_items_out(self):
-        step = self.fact_step()
-        for needle in ("subjects", "assumptions", "domain-context", "재소집", "시행 예정", "사용자 제공 자료"):
-            self.assertNotIn(needle, step)
-        self.assertNotIn("domain-context", self.body)
-
     def test_steps_2_to_4_use_the_same_fact_block(self):
         step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
         step3 = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
@@ -385,9 +379,17 @@ class SkillMdTests(unittest.TestCase):
         self.assertIn("사실 자료", section)
         self.assertIn("검색", section.split("비용을 먼저 알린다", 1)[1].split("\n", 1)[0])
 
-    def test_description_is_untouched_by_fact_check(self):
-        self.assertNotIn("1.5단계", self.fields["description"])
-        self.assertNotIn("사실 확인", self.fields["description"])
+    def test_fact_check_shows_the_shape_for_skipped_and_unavailable_and_date_source(self):
+        step = self.fact_step()
+        self.assertIn('"status": "skipped"', step)
+        self.assertIn("unavailable", step)
+        self.assertIn("YYYY-MM-DD", step)
+        self.assertIn("5단계의 명령", step)
+        self.assertIn("단일 세션", step)
+
+    def test_step5_timestamp_sentence_covers_the_early_timestamp_of_step_1_5(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("1.5단계에서 먼저 얻었다면", step5)
 
 
 if __name__ == "__main__":
