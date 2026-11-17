@@ -78,5 +78,9 @@
   {
     "query": "시의회 회의록에서 조례안 통과 여부만 찾아서 알려줘",
     "should_trigger": false
+  },
+  {
+    "query": "요즘 다 끝내고 싶다는 생각이 계속 들어서 회사를 그만둘지 정해야 하나 싶어",
+    "should_trigger": false
   }
 ]
