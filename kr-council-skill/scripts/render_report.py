@@ -581,6 +581,45 @@ def _review_mini(data):
     return "\n".join(out)
 
 
+def _fact_item(n, item):
+    """사실 항목 하나. 링크는 source(URL)가 있을 때만 걸고, 라벨과 미확인 배지는 텍스트로만 쓴다."""
+    claim = f'<span class="fact-claim">{_e(item.get("claim", ""))}</span>'
+    badge = '' if item.get("confirmed") else ' <span class="fact-badge">미확인</span>'
+    label, source = item.get("source_label"), item.get("source")
+    if _is_url(source):
+        shown = _e(label) if isinstance(label, str) and label.strip() else _e(source)
+        src = (f' <span class="fact-src"><a href="{_e(source)}" rel="noopener noreferrer" target="_blank">'
+               f'{shown}</a></span>')
+    elif isinstance(label, str) and label.strip():
+        src = f' <span class="fact-src">{_e(label)}</span>'
+    else:
+        src = ""
+    note = item.get("note")
+    note_html = f' <span class="fact-note">{_e(note)}</span>' if isinstance(note, str) and note.strip() else ""
+    return f'<li><b class="fact-no">F{n}</b><span class="fact-body">{claim}{badge}{src}{note_html}</span></li>'
+
+
+def _facts_html(data):
+    """1.5단계 사실 자료를 히어로 카드 안의 접이식으로 그린다. 없거나 skipped면 빈 문자열(본문이 기존과 같다)."""
+    facts = data.get("facts") if isinstance(data, dict) else None
+    if not isinstance(facts, dict):
+        return ""
+    status = facts.get("status")
+    if status == "unavailable":
+        return '<p class="facts facts-unavailable">최신 정보를 확인하지 못했습니다. 제도·수치는 공식 자료로 확인하십시오.</p>'
+    items = facts.get("items")
+    if status != "checked" or not isinstance(items, list):
+        return ""
+    rows = [_fact_item(n, item) for n, item in enumerate(items, 1) if isinstance(item, dict)]
+    if not rows:
+        return ""
+    return ('<details class="facts">'
+            f'<summary>사실 확인 · 확인일 {_e(facts.get("checked_at", ""))}</summary>'
+            '<p class="facts-intro">사회자가 위원장 명의로 한 번 조사한 자료이며, 위원 5명·검토 5명·위원장이 같은 자료를 보았습니다. '
+            '위원은 항목 번호(F1…)로 인용합니다.</p>'
+            f'<ol class="facts-list">{"".join(rows)}</ol></details>')
+
+
 def _verdict(data):
     v = data["verdict"]
     items = lambda seq: "<ul>" + "".join(f"<li>{_sent(i)}</li>" for i in seq) + "</ul>"
@@ -614,7 +653,7 @@ def render(data, template):
         "TITLE": _e(data["title"]), "CREATED": _e(data["created"]),
         "MODE_BANNER": _e(MODE_BANNERS[data["mode"]]), "DISCLAIMER": _e(DISCLAIMER),
         "CHAIR_NAME": _e(CHAIR_NAME),
-        "QUESTION": _e(data["question"]), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
+        "QUESTION": _e(data["question"]), "FACTS": _facts_html(data), "ADVISOR_CARDS": _cards(data), "MINI_CARDS": _mini_cards(data),
         "AFFINITY_MAP": _affinity_map(data),
         "NOTICE_ABOUT": _notices(_notice_about(data["mode"])), "NOTICE_CAUTION": _notices(NOTICE_CAUTION),
         "REVIEW_CARDS": _review_cards(data), "REVIEW_MINI": _review_mini(data), "VERDICT": _verdict(data),

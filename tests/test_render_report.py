@@ -707,5 +707,109 @@ class FactsValidateTests(unittest.TestCase):
         self.assertEqual(facts_errors(f), [])
 
 
+def facts_html(facts=None):
+    d = sample()
+    if facts is not None:
+        d["facts"] = facts
+    return render(d, template())
+
+
+class FactsRenderTests(unittest.TestCase):
+    def test_no_facts_renders_no_facts_block(self):
+        html = facts_html()
+        self.assertNotIn('class="facts', html.split("<style>", 1)[1].split("</style>", 1)[1])
+        self.assertNotIn("{{", html)
+
+    def test_empty_slot_leaves_body_unchanged(self):
+        self.assertEqual(facts_html(), render(sample(), template().replace("{{FACTS}}", "")))
+        self.assertIn("{{FACTS}}", template())
+
+    def test_checked_renders_details_and_links(self):
+        html = facts_html(facts_sample())
+        self.assertIn('<details class="facts">', html)
+        self.assertNotRegex(html, r"<details[^>]*\sopen")
+        self.assertIn("사실 확인", html)
+        self.assertIn("2026-11-17", html)
+        self.assertEqual(html.count('href="https://example.org/a"'), 1)
+        self.assertEqual(html.count('rel="noopener noreferrer"'), 1)
+        self.assertEqual(html.count('target="_blank"'), 1)
+        body = html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+        self.assertEqual(body.count("<a "), 1)  # 라벨 전용·미확인 항목에는 링크가 없다
+        self.assertIn("미확인", body)
+
+    def test_source_label_only_confirmed(self):
+        f = facts_sample(items=[{"claim": "도구로 조회", "source_label": "국가법령정보센터 조회(도구)", "confirmed": True}])
+        html = facts_html(f)
+        body = html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+        self.assertNotIn("<a ", body)
+        self.assertIn("국가법령정보센터 조회(도구)", body)
+        self.assertNotIn("미확인", body)
+
+    def test_unconfirmed_label_is_shown(self):
+        body = facts_html(facts_sample()).split('<details class="facts">', 1)[1]
+        self.assertIn("비공식 출처만 확인", body)
+
+    def test_skipped_renders_nothing(self):
+        f = {"status": "skipped", "checked_at": "2026-11-17", "reason": "관점이 갈리는 결정이라 건너뜀"}
+        self.assertEqual(facts_html(f), facts_html())
+        self.assertNotIn("관점이 갈리는 결정이라 건너뜀", facts_html(f))
+
+    def test_unavailable_shows_notice(self):
+        f = {"status": "unavailable", "checked_at": "2026-11-17", "reason": "검색 도구 없음"}
+        html = facts_html(f)
+        self.assertIn("최신 정보를 확인하지 못했습니다", html)
+        self.assertNotIn("<details", html.split("</style>", 1)[1].split("<main>", 1)[1].split('id="report"', 1)[0])
+
+    def test_facts_escapes_and_does_not_resubstitute(self):
+        f = facts_sample()
+        f["items"][0]["claim"] = "<script>alert(1)</script> {{TITLE}}"
+        f["items"][0]["note"] = '"><img src=x onerror=1>'
+        f["items"][1]["source_label"] = "{{QUESTION}} & <b>굵게</b>"
+        html = facts_html(f)
+        self.assertEqual(html.count("<script"), 1)  # 템플릿의 정적 스크립트 하나뿐
+        self.assertNotIn("<img src=x", html)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt; {{TITLE}}", html)
+        self.assertIn("{{QUESTION}} &amp; &lt;b&gt;굵게&lt;/b&gt;", html)
+
+    def test_url_is_escaped_in_href(self):
+        f = facts_sample()
+        f["items"][0]["source"] = 'https://example.org/a?x=1&y="2"'
+        html = facts_html(f)
+        self.assertIn('href="https://example.org/a?x=1&amp;y=&quot;2&quot;"', html)
+
+    def test_items_numbered_in_input_order(self):
+        body = facts_html(facts_sample()).split('<details class="facts">', 1)[1]
+        self.assertLess(body.index("F1"), body.index("F2"))
+        self.assertLess(body.index("F2"), body.index("F3"))
+        self.assertNotIn("F4", body)
+
+    def test_facts_sits_inside_hero_card_after_question(self):
+        html = facts_html(facts_sample())
+        self.assertLess(html.index('class="question"'), html.index('<details class="facts">'))
+        self.assertLess(html.index('<details class="facts">'), html.index('class="tabs'))
+
+    def test_template_hides_facts_in_print(self):
+        css = template().split("@media print {", 1)[1].split("\n}\n", 1)[0]
+        self.assertIn(".facts { display: none !important; }", css)
+        self.assertIn(".site-header, .js-only, #notice, .tabs, .subtabs { display: none !important; }", css)
+
+    def test_facts_style_uses_no_external_resources(self):
+        html = facts_html(facts_sample())
+        self.assertIn(".facts", html)
+        for url in re.findall(r'(?:src|href)="(https?:[^"]*)"', html):
+            self.assertEqual(url, "https://example.org/a")
+        self.assertIsNone(re.search(r"@import|url\(\s*['\"]?https?:", html))
+
+    def test_render_rejects_invalid_facts(self):
+        with self.assertRaises(ValueError):
+            facts_html({"status": "checked"})
+
+    def test_facts_html_survives_unvalidated_input(self):
+        import render_report as rr
+        for bad in ([], "", 0, None, {}, {"status": "checked"}, {"status": "checked", "items": "x"},
+                    {"status": "checked", "items": [1, None]}):
+            self.assertIsInstance(rr._facts_html({"facts": bad}), str)
+
+
 if __name__ == "__main__":
     unittest.main()
