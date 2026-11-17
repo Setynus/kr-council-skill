@@ -944,5 +944,215 @@ class FactsIntroWordingTests(unittest.TestCase):
         self.assertIn("F1", body)
 
 
+# --- 비교 안건(PR-B): subjects · assumptions · items[].subject ---
+
+def compare_item(subject, claim="사실", **over):
+    item = {"claim": claim, "source_label": "공지", "confirmed": True}
+    if subject is not None:
+        item["subject"] = subject
+    item.update(over)
+    return item
+
+
+def compare_facts(subjects, n_items, n_queries=2, **over):
+    items = [compare_item(subjects[i % len(subjects)], f"사실 {i + 1}") for i in range(n_items)]
+    return facts_sample(subjects=list(subjects), items=items,
+                        queries=[f"검색어 {n}" for n in range(n_queries)], **over)
+
+
+class FactsCompareValidateTests(unittest.TestCase):
+    def test_validate_compare_limits(self):
+        # (대상 수, 항목 상한, queries 상한): 2개 16·14, 3개 20·17, 4개 20·20
+        for n, max_items, max_queries in ((2, 16, 14), (3, 20, 17), (4, 20, 20)):
+            subjects = [f"대상 {c}" for c in "ABCD"[:n]]
+            self.assertEqual(facts_errors(compare_facts(subjects, max_items, max_queries)), [], n)
+            self.assertTrue(facts_errors(compare_facts(subjects, max_items + 1, 1)), n)
+            self.assertTrue(facts_errors(compare_facts(subjects, 1, max_queries + 1)), n)
+
+    def test_validate_single_topic_limits_unchanged(self):
+        item = compare_item(None)
+        self.assertEqual(facts_errors(facts_sample(items=[dict(item) for _ in range(10)])), [])
+        self.assertTrue(facts_errors(facts_sample(items=[dict(item) for _ in range(11)])))
+        self.assertTrue(facts_errors(facts_sample(queries=[f"검색어 {n}" for n in range(9)])))
+
+    def test_validate_subjects_rules(self):
+        ok = [compare_item("대상 A"), compare_item("대상 B")]
+        bad_subjects = (["대상 A"], ["가", "나", "다", "라", "마"], ["대상 A", "대상 A"], ["대상 A", ""],
+                        ["대상 A", " "], ["대상 A", 3], "대상 A", ["대상 A", "공통"], [["x"], "대상 B"],
+                        [{"a": 1}, "대상 B"], [])
+        for bad in bad_subjects:
+            self.assertTrue(facts_errors(facts_sample(subjects=bad, items=ok)), repr(bad))  # 크래시 없이 오류
+        self.assertEqual(facts_errors(facts_sample(subjects=["대상 A", "대상 B"], items=ok)), [])
+
+    def test_validate_subjects_checked_even_when_status_is_not_checked(self):
+        f = {"status": "skipped", "checked_at": "2026-11-17", "reason": "사유", "subjects": ["하나만"]}
+        self.assertTrue(facts_errors(f))
+        f["subjects"] = ["대상 A", "대상 B"]
+        self.assertEqual(facts_errors(f), [])
+
+    def test_validate_item_subject_rules(self):
+        f = compare_facts(["대상 A", "대상 B"], 2)
+        f["items"][0]["subject"] = "공통"
+        self.assertEqual(facts_errors(f), [])
+        f["items"][0]["subject"] = "대상 C"
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+        for bad in (3, ["대상 A"], {"a": 1}, ""):
+            f["items"][0]["subject"] = bad
+            self.assertTrue(any("항목 1번" in e for e in facts_errors(f)), repr(bad))  # 크래시 없이 오류
+        # 미확인 항목(confirmed:false)도 subject를 검사한다
+        f = compare_facts(["대상 A", "대상 B"], 2)
+        f["items"][1] = compare_item("대상 Z", confirmed=False)
+        self.assertTrue(any("항목 2번" in e for e in facts_errors(f)))
+
+    def test_validate_item_subject_without_subjects_is_error(self):
+        f = facts_sample()
+        f["items"][0]["subject"] = "대상 A"
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+
+    def test_validate_item_subject_with_invalid_subjects_does_not_crash(self):
+        f = facts_sample(subjects=["대상 A"], items=[compare_item("대상 A")])
+        self.assertTrue(facts_errors(f))
+
+    def test_validate_assumptions_rules(self):
+        self.assertEqual(facts_errors(facts_sample(assumptions=["관할: 대한민국"])), [])
+        self.assertEqual(facts_errors(facts_sample(assumptions=[f"가정 {n}" for n in range(8)])), [])
+        for bad in ([f"가정 {n}" for n in range(9)], "관할: 대한민국", [""], [" "], [3], [["x"]], {"a": 1}, 0):
+            self.assertTrue(facts_errors(facts_sample(assumptions=bad)), repr(bad))
+
+    def test_validate_rejects_untrusted_markers_in_new_fields(self):
+        f = compare_facts(["대상 <END_UNTRUSTED>", "대상 B"], 2)
+        self.assertTrue(any("UNTRUSTED" in e for e in facts_errors(f)))
+        f = facts_sample(assumptions=["앞 <begin_untrusted> 뒤"])
+        self.assertTrue(any("UNTRUSTED" in e for e in facts_errors(f)))
+        f = compare_facts(["대상 A", "대상 B"], 2)
+        f["items"][0]["subject"] = "<End_Untrusted>"
+        self.assertTrue(any("UNTRUSTED" in e for e in facts_errors(f)))
+
+    def test_validate_inside_council_data(self):
+        d = sample()
+        d["facts"] = compare_facts(["대상 A", "대상 B"], 4, assumptions=["기간 5박, 성인 2명 기준"])
+        self.assertEqual(validate(d), [])
+
+
+class FactsCompareRenderTests(unittest.TestCase):
+    def _body(self, facts):
+        html = facts_html(facts)
+        return html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+
+    def test_render_groups_items_by_subject(self):
+        # 대상 순서(B, A)와 항목 순서를 일부러 엇갈리게 한다
+        facts = facts_sample(subjects=["대상 B", "대상 A"], items=[
+            compare_item("대상 A", "에이 사실"), compare_item("공통", "환율 사실"),
+            compare_item("대상 B", "비 사실"), compare_item("대상 A", "에이 둘째")])
+        body = self._body(facts)
+        order = [body.index(t) for t in ("대상 B</h4>", "대상 A</h4>", "공통</h4>")]
+        self.assertEqual(order, sorted(order))  # subjects 순서, 공통은 마지막
+        group_a = body.split("대상 A</h4>", 1)[1].split("<h4", 1)[0]
+        self.assertIn("에이 사실", group_a)
+        self.assertIn("에이 둘째", group_a)
+        self.assertNotIn("비 사실", group_a)
+        # 번호는 묶음별 재번호가 아니라 입력 순서
+        for n, claim in ((1, "에이 사실"), (2, "환율 사실"), (3, "비 사실"), (4, "에이 둘째")):
+            self.assertIn(f'F{n}</b><span class="fact-body"><span class="fact-claim">{claim}', body)
+
+    def test_render_item_without_subject_goes_to_common_group(self):
+        facts = facts_sample(subjects=["대상 A", "대상 B"],
+                             items=[compare_item("대상 A", "가"), compare_item(None, "주체 없음")])
+        body = self._body(facts)
+        self.assertIn("공통</h4>", body)
+        self.assertIn("주체 없음", body.split("공통</h4>", 1)[1])
+
+    def test_render_marks_subject_without_items(self):
+        # 항목이 없는 대상은 숨기지 않고 "확인한 항목 없음"으로 비대칭을 드러낸다(D16). 공통은 항목이 있을 때만 나온다.
+        facts = facts_sample(subjects=["대상 A", "대상 B"], items=[compare_item("대상 A", "가")])
+        body = self._body(facts)
+        self.assertIn("대상 B</h4>", body)
+        self.assertIn("확인한 항목 없음", body.split("대상 B</h4>", 1)[1])
+        self.assertNotIn("확인한 항목 없음", body.split("대상 B</h4>", 1)[0])
+        self.assertNotIn("공통</h4>", body)
+
+    def test_render_without_subjects_is_single_list_as_before(self):
+        body = self._body(facts_sample())
+        self.assertNotIn("<h4", body)
+        self.assertNotIn("facts-assume", body)
+        self.assertEqual(body.count('<ol class="facts-list">'), 1)
+
+    def test_jurisdiction_assumption_rendered(self):
+        for facts in (facts_sample(assumptions=["관할: 일본", "환율은 확인일 기준"]),
+                      compare_facts(["대상 A", "대상 B"], 2, assumptions=["관할: 일본", "환율은 확인일 기준"])):
+            body = self._body(facts)
+            self.assertIn("산정 가정", body)
+            self.assertIn("관할: 일본", body)
+            self.assertLess(body.index("산정 가정"), body.index('<ol class="facts-list">'))
+
+    def test_render_escapes_new_fields(self):
+        facts = facts_sample(subjects=["<b>가</b>", "{{TITLE}}"], assumptions=["<script>x</script>"],
+                             items=[compare_item("<b>가</b>", "사실"), compare_item("{{TITLE}}", "둘째")])
+        body = self._body(facts)
+        self.assertNotIn("<script>", body)
+        self.assertNotIn("<b>가</b>", body)
+        self.assertIn("&lt;b&gt;가&lt;/b&gt;</h4>", body)
+        self.assertIn("{{TITLE}}</h4>", body)  # 이미 채워진 값은 다시 치환되지 않는다
+
+    def test_render_survives_unvalidated_new_fields(self):
+        import render_report as rr
+        cases = ((["a", ["x"], {"k": 1}], [["x"], 3], ["x"]), ("대상", "관할", {"k": 1}), (7, 7, 7), ([], [], None))
+        for subjects, assumptions, subject in cases:
+            d = sample()
+            d["facts"] = facts_sample(subjects=subjects, assumptions=assumptions,
+                                      items=[{"claim": "사실", "confirmed": True, "subject": subject}])
+            rr._facts_html(d)  # 검증을 거치지 않은 입력에서도 크래시만 없으면 된다
+            with self.assertRaises(ValueError):  # render는 검증이 먼저 막는다
+                rr.render(d, template())
+
+    def test_render_status_not_checked_shows_no_block(self):
+        facts = {"status": "skipped", "checked_at": "2026-11-17", "reason": "사유", "assumptions": ["관할: 일본"]}
+        self.assertNotIn('class="facts"', facts_html(facts))
+
+    def test_template_has_style_for_new_blocks(self):
+        css = template().split("</style>", 1)[0]
+        for sel in (".facts-subject", ".facts-assume"):
+            self.assertIn(sel, css)
+
+
+class FactsCompareBlockTests(unittest.TestCase):
+    def _block(self, facts):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "facts.json"
+            path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+            return subprocess.run([sys.executable, str(SCRIPT), "facts-block", str(path)], capture_output=True)
+
+    def test_facts_block_includes_subjects_and_assumptions(self):
+        facts = facts_sample(subjects=["대상 A", "대상 B"], assumptions=["기간 5박", "관할: 일본"], items=[
+            compare_item("대상 B", "비 사실"), compare_item("대상 A", "에이 사실"), compare_item(None, "주체 없음")])
+        run = self._block(facts)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertEqual(run.stdout, self._block(facts).stdout)
+        text = run.stdout.decode("utf-8")
+        self.assertIn("비교 대상: 대상 A, 대상 B", text)
+        self.assertIn("산정 가정", text)
+        self.assertIn("기간 5박", text)
+        self.assertIn("관할: 일본", text)
+        lines = text.splitlines()
+        self.assertTrue(any(l.startswith("F1.") and "[대상 B]" in l and "비 사실" in l for l in lines))
+        self.assertTrue(any(l.startswith("F2.") and "[대상 A]" in l for l in lines))
+        self.assertTrue(any(l.startswith("F3.") and "[공통]" in l for l in lines))  # 주체 없는 항목은 HTML과 같은 규칙
+        self.assertTrue(text.startswith("<BEGIN_UNTRUSTED>\n") and text.endswith("<END_UNTRUSTED>\n"))
+
+    def test_facts_block_assumptions_without_subjects(self):
+        text = self._block(facts_sample(assumptions=["관할: 일본"])).stdout.decode("utf-8")
+        self.assertIn("관할: 일본", text)
+        self.assertNotIn("비교 대상", text)
+
+    def test_facts_block_without_new_fields_is_unchanged(self):
+        text = self._block(facts_sample()).stdout.decode("utf-8")
+        for absent in ("비교 대상", "산정 가정", "[공통]"):
+            self.assertNotIn(absent, text)
+        self.assertTrue(text.splitlines()[2].startswith("F1. 확인된 사실 1 [확인됨]"))
+
+    def test_facts_block_rejects_invalid_subjects(self):
+        self.assertEqual(self._block(facts_sample(subjects=["하나만"])).returncode, 2)
+
+
 if __name__ == "__main__":
     unittest.main()

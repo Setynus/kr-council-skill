@@ -391,6 +391,36 @@ class SkillMdTests(unittest.TestCase):
         step5 = self.body.split("## 5단계", 1)[1]
         self.assertIn("1.5단계에서 먼저 얻었다면", step5)
 
+    # --- 1.5단계 비교 안건(PR-B) ---
+
+    def test_fact_check_compare_rules(self):
+        step = self.fact_step()
+        for needle in ("subjects", "subject", "공통", "대칭", "미확인", "똑같이", "대상당 얕아질"):
+            self.assertIn(needle, step)
+
+    def test_fact_check_compare_limits_are_stated_and_announced(self):
+        step = self.fact_step()
+        for needle in ("16개", "14개", "20개", "17개", "2~4개", "후보를 줄"):
+            self.assertIn(needle, step)
+        step1 = self.body.split("## 1단계", 1)[1].split("## 1.5단계", 1)[0]
+        self.assertIn("웹 검색을 최대 8회", step1)  # 기존 문구는 그대로 둔다
+        self.assertIn("비교 안건", step1)
+        self.assertIn("14", step1)
+
+    def test_fact_check_assumptions_and_jurisdiction(self):
+        step = self.fact_step()
+        for needle in ("assumptions", "산정", "총경비", "관할", "ko-context.md", "환율", "기준일"):
+            self.assertIn(needle, step)
+
+    def test_fact_check_format_example_shows_the_compare_fields(self):
+        example = self.fact_step().split("```", 2)[1]
+        for needle in ("subjects", "assumptions", '"subject"'):
+            self.assertIn(needle, example)
+
+    def test_step_numbering_in_fact_check_is_unique_and_sequential(self):
+        nums = [int(n) for n in re.findall(r"^(\d+)\. ", self.fact_step(), flags=re.M)]
+        self.assertEqual(nums, list(range(1, len(nums) + 1)))
+
 
 if __name__ == "__main__":
     unittest.main()
