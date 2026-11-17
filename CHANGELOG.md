@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
+### 추가
+- `references/domain-context.md`: 여행·구매·학업·주거·의료·가족·공공·금융·창업·해외 제도 영역별로 확인할 사실 범주를 정리했고, 1.5단계에서 모든 대상에 같은 범주를 조사하도록 링크했습니다.
+- 1.5단계 시나리오 규칙: 사용자 제공 자료·내부 규정·사용자 수치("사용자 제시")와 외부 사실의 충돌 표기, 법령 전용 조회 도구 우선, 현행과 시행 예정의 분리, 공식 출처 충돌 표기, 복합 안건 분리 제안, 재소집 시 재확인("변동 큼" 항목은 7일 초과 시 권고).
+- 4단계: 의료·법률·세무·투자·안전 영역은 권고를 조건부로 쓰고 전문가 확인 항목을 `blindspots`에 넣습니다. 공식 출처끼리 충돌한 사실이 권고를 좌우하면 신뢰도를 한 단계 낮춥니다(이미 낮음이면 유지).
+- 평가 자산: `tests/trigger-eval.json` 12건, `comparison/questions.md` q11~q22, `evals/` 7건.
+
+### 변경
+- `facts-block`이 항목 없는 비교 대상을 `[대상] 확인한 항목 없음`으로 표시합니다(보고서와 같은 표현). `subjects`가 없거나 모든 대상에 항목이 있으면 출력은 이전과 바이트 동일합니다.
+- `ko-context.md` 금액 행: 원화 기준으로 정리하되 해외 통화가 걸리면 환산 환율과 기준일을 밝힙니다. 1단계 5항: 사용자가 준 수치·상태는 "사용자 제시"로 표기합니다.
+
+### 알려진 한계
+- 확인한 것: 단위 테스트 278개, v0.7.0과 `facts-block` 출력의 바이트 비교, CI 6개 조합. 새 시나리오 규칙은 문안으로만 강제하며 코드는 검사하지 않습니다.
+- 확인하지 못한 것: 비교 안건 종단 실행, 화면(다크 모드·모바일 폭) 눈 확인, 새 `evals/` 7건의 실행. 법령 조회 도구가 URL을 돌려주는지도 확인하지 못했습니다.
+
 ## [0.7.0] - 2026-11-17
 
 ### 추가
@@ -181,7 +197,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.8.0
 [0.7.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.7.0
 [0.6.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.6.0
 [0.5.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.2
