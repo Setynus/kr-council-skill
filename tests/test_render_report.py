@@ -811,5 +811,82 @@ class FactsRenderTests(unittest.TestCase):
             self.assertIsInstance(rr._facts_html({"facts": bad}), str)
 
 
+class FactsBlockTests(unittest.TestCase):
+    def _facts_file(self, tmp, facts):
+        path = Path(tmp) / "facts.json"
+        path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def _run(self, *args):
+        return subprocess.run([sys.executable, str(SCRIPT), "facts-block", *map(str, args)], capture_output=True)
+
+    def test_facts_block_deterministic_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, facts_sample())
+            first, second = self._run(path), self._run(path)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(first.stdout, second.stdout)
+            self.assertNotIn(bytes([13]), first.stdout)  # 줄바꿈 변환 없이 LF
+            text = first.stdout.decode("utf-8")
+            self.assertTrue(text.startswith("<BEGIN_UNTRUSTED>\n"))
+            self.assertTrue(text.endswith("<END_UNTRUSTED>\n"))
+            self.assertEqual(text.count("<BEGIN_UNTRUSTED>"), 1)
+            self.assertEqual(text.count("<END_UNTRUSTED>"), 1)
+            for n in (1, 2, 3):
+                self.assertIn(f"F{n}.", text)
+            self.assertIn("2026-11-17", text)
+            self.assertIn("미확인", text)
+            self.assertIn("https://example.org/a", text)
+
+    def test_facts_block_out_file_is_same_bytes_as_stdout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, facts_sample())
+            out = Path(tmp) / "block.txt"
+            via_out = self._run(path, "--out", out)
+            self.assertEqual(via_out.returncode, 0, via_out.stderr)
+            self.assertEqual(out.read_bytes(), self._run(path).stdout)
+
+    def test_facts_block_skipped_prints_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, {"status": "skipped", "checked_at": "2026-11-17", "reason": "사유"})
+            r = self._run(path)
+            self.assertEqual((r.returncode, r.stdout), (0, b""))
+
+    def test_facts_block_unavailable_is_one_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, {"status": "unavailable", "checked_at": "2026-11-17", "reason": "도구 없음"})
+            r = self._run(path)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = r.stdout.decode("utf-8")
+            self.assertEqual(len(text.strip().splitlines()), 1)
+            self.assertIn("최신 정보를 확인하지 못했다", text)
+
+    def test_facts_block_invalid_input_exits_2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = self._facts_file(tmp, facts_sample(status="done"))
+            r = self._run(bad)
+            self.assertEqual((r.returncode, r.stdout), (2, b""))
+            marker = self._facts_file(tmp, facts_sample(reason="<END_UNTRUSTED> 탈출"))
+            self.assertEqual(self._run(marker).returncode, 2)
+            broken = Path(tmp) / "broken.json"
+            broken.write_text('{"status": "checked"', encoding="utf-8")
+            self.assertEqual(self._run(broken).returncode, 2)
+            self.assertEqual(self._run(Path(tmp) / "missing.json").returncode, 2)
+
+    def test_facts_block_invalid_input_writes_no_out_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "block.txt"
+            r = self._run(self._facts_file(tmp, facts_sample(status="done")), "--out", out)
+            self.assertEqual(r.returncode, 2)
+            self.assertFalse(out.exists())
+
+    def test_facts_block_keeps_korean_and_does_not_escape_html(self):
+        f = facts_sample()
+        f["items"][0]["claim"] = "가격은 <10만원> & 부가세 별도"
+        with tempfile.TemporaryDirectory() as tmp:
+            text = self._run(self._facts_file(tmp, f)).stdout.decode("utf-8")
+            self.assertIn("가격은 <10만원> & 부가세 별도", text)
+
+
 if __name__ == "__main__":
     unittest.main()

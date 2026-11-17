@@ -137,6 +137,62 @@ class AssembleTests(unittest.TestCase):
         self.assertIn("mode", " ".join(errors))
 
 
+class AssembleFactsTests(unittest.TestCase):
+    FACTS = {"status": "checked", "checked_at": "2026-11-17", "reason": "현행 기준 확인",
+             "items": [{"claim": "사실 하나", "source_label": "해당 부처 공지", "confirmed": True}]}
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.raw = Path(self._tmp.name)
+        write_raw(self.raw)
+
+    def test_facts_json_is_carried_into_council_data_unchanged(self):
+        (self.raw / "facts.json").write_text(json.dumps(self.FACTS, ensure_ascii=False), encoding="utf-8")
+        data, errors = assemble(self.raw)
+        self.assertEqual(errors, [])
+        self.assertEqual(data["facts"], self.FACTS)
+
+    def test_no_facts_json_means_no_facts_key(self):
+        data, errors = assemble(self.raw)
+        self.assertEqual(errors, [])
+        self.assertNotIn("facts", data)
+
+    def test_facts_in_meta_and_facts_json_is_an_error(self):
+        (self.raw / "facts.json").write_text(json.dumps(self.FACTS, ensure_ascii=False), encoding="utf-8")
+        meta = json.loads((self.raw / "meta.json").read_text(encoding="utf-8"))
+        meta["facts"] = self.FACTS
+        (self.raw / "meta.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+        data, errors = assemble(self.raw)
+        self.assertIsNone(data)
+        self.assertIn("facts.json", " ".join(errors))
+        self.assertIn("meta.json", " ".join(errors))
+
+    def test_broken_or_invalid_facts_json_is_reported_by_file_name(self):
+        path = self.raw / "facts.json"
+        path.write_text(json.dumps(self.FACTS, ensure_ascii=False)[:-2], encoding="utf-8")
+        data, errors = assemble(self.raw)
+        self.assertIsNone(data)
+        self.assertIn("facts.json", " ".join(errors))
+        path.write_text("[]", encoding="utf-8")
+        data, errors = assemble(self.raw)
+        self.assertIsNone(data)
+        self.assertIn("facts.json", " ".join(errors))
+        path.write_text(json.dumps(dict(self.FACTS, status="done")), encoding="utf-8")
+        data, errors = assemble(self.raw)
+        self.assertIsNone(data)
+        self.assertTrue(all(e.startswith("facts.json") for e in errors), errors)
+
+    def test_cli_assemble_then_render_shows_facts(self):
+        (self.raw / "facts.json").write_text(json.dumps(self.FACTS, ensure_ascii=False), encoding="utf-8")
+        out_json, out_html = self.raw.parent / (self.raw.name + "-c.json"), self.raw.parent / (self.raw.name + "-c.html")
+        self.addCleanup(lambda: [p.unlink() for p in (out_json, out_html) if p.exists()])
+        run = lambda *a: subprocess.run([sys.executable, str(SCRIPT), *a], capture_output=True)
+        self.assertEqual(run("assemble", str(self.raw), "--out", str(out_json)).returncode, 0)
+        self.assertEqual(run("render", str(out_json), "--out", str(out_html)).returncode, 0)
+        self.assertIn("사실 하나", out_html.read_text(encoding="utf-8"))
+
+
 class Cli(unittest.TestCase):
     def test_assemble_then_render(self):
         with tempfile.TemporaryDirectory() as tmp:
