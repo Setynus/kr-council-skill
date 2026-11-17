@@ -1,6 +1,6 @@
 # kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
 
-[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
@@ -133,7 +133,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 버전 이력
 
-최신 버전 0.7.0(2026-11-17): 사실 확인이 비교 안건(대상 2~4개, 산정 가정·관할 표기, 대상 수에 비례한 상한)을 지원하고, 보고서에 대상별로 묶어 보여 줍니다.
+최신 버전 0.8.0(2026-11-17): 사실 확인에 영역별 확인 범주 체크리스트와 고위험 영역의 조건부 권고, 사용자 자료·내부 규정·출처 충돌·재소집 처리 규칙을 더했습니다.
 
 이전 버전과 전체 변경 내용은 [CHANGELOG.md](CHANGELOG.md), 배포본은 [Releases](https://github.com/Setynus/kr-council-skill/releases)를 보세요.
 
