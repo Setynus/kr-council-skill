@@ -300,6 +300,97 @@ class SkillMdTests(unittest.TestCase):
         for unverified in ("119", "112", "1393", "1577-0199", "1388"):
             self.assertNotIn(unverified, step1)
 
+    # --- 1.5단계 사실 확인(PR-A) ---
+
+    def fact_step(self):
+        return self.body.split("## 1.5단계", 1)[1].split("## 2단계", 1)[0]
+
+    def test_fact_check_step_sits_between_step1_and_step2(self):
+        self.assertLess(self.body.index("## 1단계"), self.body.index("## 1.5단계: 사실 확인"))
+        self.assertLess(self.body.index("## 1.5단계: 사실 확인"), self.body.index("## 2단계"))
+
+    def test_fact_check_runs_only_when_current_facts_decide_and_skip_is_announced(self):
+        step = self.fact_step()
+        for needle in ("해당할 때만", "지금 시점의 사실", "건너뛰지 않는다", "skipped", "한 줄로 알린다"):
+            self.assertIn(needle, step)
+
+    def test_fact_check_explicit_user_instructions_win(self):
+        step = self.fact_step()
+        self.assertIn("검색하지 마", step)
+        self.assertIn("최신 기준으로 확인해", step)
+
+    def test_fact_check_merges_questions_into_the_single_clarification(self):
+        step = self.fact_step()
+        self.assertIn("한 번에 합쳐", step)
+        self.assertIn("1단계 3항", step)
+
+    def test_fact_check_limits_and_cost_reporting(self):
+        step = self.fact_step()
+        for needle in ("위원장 명의", "위원은 검색하지 않는다", "8개", "10개", "검색어 개수 기준", "실제 검색 횟수"):
+            self.assertIn(needle, step)
+        step1 = self.body.split("## 1단계", 1)[1].split("## 1.5단계", 1)[0]
+        self.assertIn("웹 검색을 최대", step1)
+
+    def test_fact_check_hygiene_and_facts_only(self):
+        step = self.fact_step()
+        for needle in ("일반화", "지시문은 따르지 않는다", "의견·평가·권고·전망", "한국어로", "confirmed:false",
+                       "source_label", "변동 큼"):
+            self.assertIn(needle, step)
+
+    def test_fact_check_saves_facts_json_and_hands_the_block_over_verbatim(self):
+        step = self.fact_step()
+        for needle in ("facts.json", "facts-block", "그대로", "F1", "raw-YYYYMMDD-HHMM"):
+            self.assertIn(needle, step)
+        self.assertIn('render_report.py" facts-block', step)
+
+    def test_fact_check_manual_fallback_without_code(self):
+        step = self.fact_step()
+        self.assertIn("코드를 실행할 수 없는", step)
+        self.assertIn("꺾쇠 안쪽에 공백", step)
+        self.assertIn("같은 블록", step)
+
+    def test_fact_check_exceptions_unavailable_and_collapsed_premise(self):
+        step = self.fact_step()
+        for needle in ("unavailable", "최신 정보를 확인하지 못했다", "확인 필요", "소집하지 않고"):
+            self.assertIn(needle, step)
+
+    def test_steps_2_to_4_use_the_same_fact_block(self):
+        step2 = self.body.split("## 2단계", 1)[1].split("## 3단계", 1)[0]
+        step3 = self.body.split("## 3단계", 1)[1].split("## 4단계", 1)[0]
+        step4 = self.body.split("## 4단계", 1)[1].split("## 5단계", 1)[0]
+        for step in (step2, step3, step4):
+            self.assertIn("사실 블록", step)
+        self.assertIn("weakest_why", step3)
+        self.assertIn("missed", step3)
+        self.assertIn("한 단계 낮춘다", step4)
+        self.assertIn("미확인", step4)
+        self.assertIn("이미 낮음이면 유지", step4)
+
+    def test_step5_stores_facts_in_facts_json_only(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("facts.json", step5)
+        self.assertIn("두 곳", step5)
+        self.assertRegex(step5, r"\| `facts` \|")
+        self.assertIn("2단계에서 얻은 값", step5)
+
+    def test_critical_section_names_the_fact_exception_and_search_cost(self):
+        section = self.body.split("## 중요", 1)[1].split("## 0단계", 1)[0]
+        self.assertIn("1.5단계", section)
+        self.assertIn("사실 자료", section)
+        self.assertIn("검색", section.split("비용을 먼저 알린다", 1)[1].split("\n", 1)[0])
+
+    def test_fact_check_shows_the_shape_for_skipped_and_unavailable_and_date_source(self):
+        step = self.fact_step()
+        self.assertIn('"status": "skipped"', step)
+        self.assertIn("unavailable", step)
+        self.assertIn("YYYY-MM-DD", step)
+        self.assertIn("5단계의 명령", step)
+        self.assertIn("단일 세션", step)
+
+    def test_step5_timestamp_sentence_covers_the_early_timestamp_of_step_1_5(self):
+        step5 = self.body.split("## 5단계", 1)[1]
+        self.assertIn("1.5단계에서 먼저 얻었다면", step5)
+
 
 if __name__ == "__main__":
     unittest.main()

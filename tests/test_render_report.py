@@ -581,5 +581,368 @@ class CliTests(unittest.TestCase):
             self.assertEqual(r.returncode, 2, r.stderr)
 
 
+def facts_sample(**over):
+    """정상 facts 한 벌(checked, 항목 3개). 테스트가 복사해 일부만 망가뜨린다."""
+    facts = {
+        "status": "checked", "checked_at": "2026-11-17", "reason": "시행 중인 법령의 현재 기준 확인이 필요함",
+        "queries": ["일반화한 검색어 1", "일반화한 검색어 2"],
+        "items": [
+            {"claim": "확인된 사실 1", "source": "https://example.org/a", "source_label": "해당 부처 공지",
+             "confirmed": True, "note": "변동 큼"},
+            {"claim": "도구로 조회한 사실", "source_label": "국가법령정보센터 조회(도구)", "confirmed": True},
+            {"claim": "확인하지 못한 사항", "source_label": "비공식 출처만 확인", "confirmed": False},
+        ],
+    }
+    facts.update(over)
+    return facts
+
+
+def facts_errors(facts):
+    import render_report as rr
+    errors = []
+    rr._check_facts(facts, errors)
+    return errors
+
+
+class FactsValidateTests(unittest.TestCase):
+    def test_sample_is_valid_alone_and_inside_validate(self):
+        self.assertEqual(facts_errors(facts_sample()), [])
+        d = sample()
+        d["facts"] = facts_sample()
+        self.assertEqual(validate(d), [])
+
+    def test_validate_without_facts_is_unchanged(self):
+        self.assertEqual(validate(sample()), [])
+
+    def test_validate_confirmed_requires_source_or_label(self):
+        f = facts_sample()
+        f["items"][1] = {"claim": "근거 없음", "confirmed": True}
+        self.assertTrue(any("항목 2번" in e for e in facts_errors(f)))
+
+    def test_validate_rejects_non_http_scheme(self):
+        for bad in ("javascript:alert(1)", "JAVASCRIPT:alert(1)", "ftp://x.org", "data:text/html,x"):
+            f = facts_sample()
+            f["items"][0]["source"] = bad
+            self.assertTrue(any("항목 1번" in e for e in facts_errors(f)), bad)
+        for ok in ("HTTP://example.org", "https://example.org/x"):
+            f = facts_sample()
+            f["items"][0]["source"] = ok
+            self.assertEqual(facts_errors(f), [], ok)
+
+    def test_validate_source_must_be_string(self):
+        f = facts_sample()
+        f["items"][0]["source"] = 7
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+
+    def test_validate_unconfirmed_must_not_have_source(self):
+        f = facts_sample()
+        f["items"][2]["source"] = "https://example.org/b"
+        self.assertTrue(any("항목 3번" in e for e in facts_errors(f)))
+        f["items"][2]["source"] = ""
+        self.assertEqual(facts_errors(f), [])  # 빈 문자열과 source_label은 허용
+
+    def test_validate_checked_item_count(self):
+        self.assertTrue(facts_errors(facts_sample(items=[])))
+        item = {"claim": "사실", "source_label": "공지", "confirmed": True}
+        self.assertTrue(facts_errors(facts_sample(items=[dict(item) for _ in range(11)])))
+        self.assertEqual(facts_errors(facts_sample(items=[dict(item) for _ in range(10)])), [])
+
+    def test_validate_non_checked_status_has_no_items(self):
+        for status in ("skipped", "unavailable"):
+            self.assertEqual(facts_errors({"status": status, "checked_at": "2026-11-17", "reason": "사유"}), [])
+            self.assertTrue(facts_errors(facts_sample(status=status)))
+
+    def test_validate_status_values(self):
+        self.assertTrue(facts_errors(facts_sample(status="done")))
+
+    def test_validate_facts_wrong_type(self):
+        for bad in ([], "", 0, {}, None, "x"):
+            d = sample()
+            d["facts"] = bad
+            self.assertTrue(validate(d), repr(bad))  # 검증을 건너뛰지 않고 크래시도 없다
+            self.assertTrue(facts_errors(bad), repr(bad))
+
+    def test_validate_checked_at_format(self):
+        for bad in ("2026-02-30", "20261117", "2026-1-5", "", None, 20261117, "2026-11-17 09:00"):
+            self.assertTrue(facts_errors(facts_sample(checked_at=bad)), repr(bad))
+        self.assertEqual(facts_errors(facts_sample(checked_at="2028-02-29")), [])
+
+    def test_validate_reason_and_claim_must_be_text(self):
+        self.assertTrue(facts_errors(facts_sample(reason=" ")))
+        f = facts_sample()
+        f["items"][0]["claim"] = ""
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+        f = facts_sample()
+        f["items"][0]["confirmed"] = "true"
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+        f = facts_sample()
+        f["items"][0]["source_label"] = ""
+        self.assertTrue(facts_errors(f))
+        f = facts_sample()
+        f["items"][0] = "문자열 항목"
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+
+    def test_validate_queries(self):
+        self.assertEqual(facts_errors(facts_sample(queries=[f"검색어 {n}" for n in range(8)])), [])
+        self.assertTrue(facts_errors(facts_sample(queries=[f"검색어 {n}" for n in range(9)])))
+        self.assertTrue(facts_errors(facts_sample(queries="검색어")))
+        self.assertTrue(facts_errors(facts_sample(queries=[1])))
+
+    def test_validate_rejects_untrusted_markers(self):
+        for field in ("claim", "note", "source_label"):
+            for marker in ("<BEGIN_UNTRUSTED>", "<end_untrusted>", "<End_Untrusted>"):
+                f = facts_sample()
+                f["items"][0][field] = f"앞 {marker} 뒤"
+                self.assertTrue(any("UNTRUSTED" in e for e in facts_errors(f)), (field, marker))
+        self.assertTrue(facts_errors(facts_sample(reason="<END_UNTRUSTED>")))
+
+    def test_validate_collects_all_errors(self):
+        f = facts_sample(status="done", checked_at="x")
+        f["items"][0]["claim"] = ""
+        self.assertGreaterEqual(len(facts_errors(f)), 3)
+
+    def test_validate_does_not_use_language_check(self):
+        f = facts_sample()
+        f["items"][0]["claim"] = "This claim is written in plain English only, long enough to trip the language check."
+        self.assertEqual(facts_errors(f), [])
+
+
+def facts_html(facts=None):
+    d = sample()
+    if facts is not None:
+        d["facts"] = facts
+    return render(d, template())
+
+
+class FactsRenderTests(unittest.TestCase):
+    def test_no_facts_renders_no_facts_block(self):
+        html = facts_html()
+        self.assertNotIn('class="facts', html.split("<style>", 1)[1].split("</style>", 1)[1])
+        self.assertNotIn("{{", html)
+
+    def test_empty_slot_leaves_body_unchanged(self):
+        self.assertEqual(facts_html(), render(sample(), template().replace("{{FACTS}}", "")))
+        self.assertIn("{{FACTS}}", template())
+
+    def test_checked_renders_details_and_links(self):
+        html = facts_html(facts_sample())
+        self.assertIn('<details class="facts">', html)
+        self.assertNotRegex(html, r"<details[^>]*\sopen")
+        self.assertIn("사실 확인", html)
+        self.assertIn("2026-11-17", html)
+        self.assertEqual(html.count('href="https://example.org/a"'), 1)
+        self.assertEqual(html.count('rel="noopener noreferrer"'), 1)
+        self.assertEqual(html.count('target="_blank"'), 1)
+        body = html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+        self.assertEqual(body.count("<a "), 1)  # 라벨 전용·미확인 항목에는 링크가 없다
+        self.assertIn("미확인", body)
+
+    def test_source_label_only_confirmed(self):
+        f = facts_sample(items=[{"claim": "도구로 조회", "source_label": "국가법령정보센터 조회(도구)", "confirmed": True}])
+        html = facts_html(f)
+        body = html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+        self.assertNotIn("<a ", body)
+        self.assertIn("국가법령정보센터 조회(도구)", body)
+        self.assertNotIn("미확인", body)
+
+    def test_unconfirmed_label_is_shown(self):
+        body = facts_html(facts_sample()).split('<details class="facts">', 1)[1]
+        self.assertIn("비공식 출처만 확인", body)
+
+    def test_skipped_renders_nothing(self):
+        f = {"status": "skipped", "checked_at": "2026-11-17", "reason": "관점이 갈리는 결정이라 건너뜀"}
+        self.assertEqual(facts_html(f), facts_html())
+        self.assertNotIn("관점이 갈리는 결정이라 건너뜀", facts_html(f))
+
+    def test_unavailable_shows_notice(self):
+        f = {"status": "unavailable", "checked_at": "2026-11-17", "reason": "검색 도구 없음"}
+        html = facts_html(f)
+        self.assertIn("최신 정보를 확인하지 못했습니다", html)
+        self.assertNotIn("<details", html.split("</style>", 1)[1].split("<main>", 1)[1].split('id="report"', 1)[0])
+
+    def test_facts_escapes_and_does_not_resubstitute(self):
+        f = facts_sample()
+        f["items"][0]["claim"] = "<script>alert(1)</script> {{TITLE}}"
+        f["items"][0]["note"] = '"><img src=x onerror=1>'
+        f["items"][1]["source_label"] = "{{QUESTION}} & <b>굵게</b>"
+        html = facts_html(f)
+        self.assertEqual(html.count("<script"), 1)  # 템플릿의 정적 스크립트 하나뿐
+        self.assertNotIn("<img src=x", html)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt; {{TITLE}}", html)
+        self.assertIn("{{QUESTION}} &amp; &lt;b&gt;굵게&lt;/b&gt;", html)
+
+    def test_url_is_escaped_in_href(self):
+        f = facts_sample()
+        f["items"][0]["source"] = 'https://example.org/a?x=1&y="2"'
+        html = facts_html(f)
+        self.assertIn('href="https://example.org/a?x=1&amp;y=&quot;2&quot;"', html)
+
+    def test_items_numbered_in_input_order(self):
+        body = facts_html(facts_sample()).split('<details class="facts">', 1)[1]
+        self.assertLess(body.index("F1"), body.index("F2"))
+        self.assertLess(body.index("F2"), body.index("F3"))
+        self.assertNotIn("F4", body)
+
+    def test_facts_sits_inside_hero_card_after_question(self):
+        html = facts_html(facts_sample())
+        self.assertLess(html.index('class="question"'), html.index('<details class="facts">'))
+        self.assertLess(html.index('<details class="facts">'), html.index('class="tabs'))
+
+    def test_template_hides_facts_in_print(self):
+        css = template().split("@media print {", 1)[1].split("\n}\n", 1)[0]
+        self.assertIn(".facts { display: none !important; }", css)
+        self.assertIn(".site-header, .js-only, #notice, .tabs, .subtabs { display: none !important; }", css)
+
+    def test_facts_style_uses_no_external_resources(self):
+        html = facts_html(facts_sample())
+        self.assertIn(".facts", html)
+        for url in re.findall(r'(?:src|href)="(https?:[^"]*)"', html):
+            self.assertEqual(url, "https://example.org/a")
+        self.assertIsNone(re.search(r"@import|url\(\s*['\"]?https?:", html))
+
+    def test_render_rejects_invalid_facts(self):
+        with self.assertRaises(ValueError):
+            facts_html({"status": "checked"})
+
+    def test_facts_html_survives_unvalidated_input(self):
+        import render_report as rr
+        for bad in ([], "", 0, None, {}, {"status": "checked"}, {"status": "checked", "items": "x"},
+                    {"status": "checked", "items": [1, None]}):
+            self.assertIsInstance(rr._facts_html({"facts": bad}), str)
+
+
+class FactsBlockTests(unittest.TestCase):
+    def _facts_file(self, tmp, facts):
+        path = Path(tmp) / "facts.json"
+        path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def _run(self, *args):
+        return subprocess.run([sys.executable, str(SCRIPT), "facts-block", *map(str, args)], capture_output=True)
+
+    def test_facts_block_deterministic_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, facts_sample())
+            first, second = self._run(path), self._run(path)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(first.stdout, second.stdout)
+            self.assertNotIn(bytes([13]), first.stdout)  # 줄바꿈 변환 없이 LF
+            text = first.stdout.decode("utf-8")
+            self.assertTrue(text.startswith("<BEGIN_UNTRUSTED>\n"))
+            self.assertTrue(text.endswith("<END_UNTRUSTED>\n"))
+            self.assertEqual(text.count("<BEGIN_UNTRUSTED>"), 1)
+            self.assertEqual(text.count("<END_UNTRUSTED>"), 1)
+            for n in (1, 2, 3):
+                self.assertIn(f"F{n}.", text)
+            self.assertIn("2026-11-17", text)
+            self.assertIn("미확인", text)
+            self.assertIn("https://example.org/a", text)
+
+    def test_facts_block_out_file_is_same_bytes_as_stdout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, facts_sample())
+            out = Path(tmp) / "block.txt"
+            via_out = self._run(path, "--out", out)
+            self.assertEqual(via_out.returncode, 0, via_out.stderr)
+            self.assertEqual(out.read_bytes(), self._run(path).stdout)
+
+    def test_facts_block_skipped_prints_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, {"status": "skipped", "checked_at": "2026-11-17", "reason": "사유"})
+            r = self._run(path)
+            self.assertEqual((r.returncode, r.stdout), (0, b""))
+
+    def test_facts_block_unavailable_is_one_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._facts_file(tmp, {"status": "unavailable", "checked_at": "2026-11-17", "reason": "도구 없음"})
+            r = self._run(path)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            text = r.stdout.decode("utf-8")
+            self.assertEqual(len(text.strip().splitlines()), 1)
+            self.assertIn("최신 정보를 확인하지 못했다", text)
+
+    def test_facts_block_invalid_input_exits_2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = self._facts_file(tmp, facts_sample(status="done"))
+            r = self._run(bad)
+            self.assertEqual((r.returncode, r.stdout), (2, b""))
+            marker = self._facts_file(tmp, facts_sample(reason="<END_UNTRUSTED> 탈출"))
+            self.assertEqual(self._run(marker).returncode, 2)
+            broken = Path(tmp) / "broken.json"
+            broken.write_text('{"status": "checked"', encoding="utf-8")
+            self.assertEqual(self._run(broken).returncode, 2)
+            self.assertEqual(self._run(Path(tmp) / "missing.json").returncode, 2)
+
+    def test_facts_block_invalid_input_writes_no_out_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "block.txt"
+            r = self._run(self._facts_file(tmp, facts_sample(status="done")), "--out", out)
+            self.assertEqual(r.returncode, 2)
+            self.assertFalse(out.exists())
+
+    def test_facts_block_keeps_korean_and_does_not_escape_html(self):
+        f = facts_sample()
+        f["items"][0]["claim"] = "가격은 <10만원> & 부가세 별도"
+        with tempfile.TemporaryDirectory() as tmp:
+            text = self._run(self._facts_file(tmp, f)).stdout.decode("utf-8")
+            self.assertIn("가격은 <10만원> & 부가세 별도", text)
+
+
+class FactsHandoffExamplesTests(unittest.TestCase):
+    """인계서 부록 B의 최소 예시와, 대화에서 건너뛸 때 남기는 최소 모양이 검증·렌더·facts-block을 모두 통과한다."""
+
+    APPENDIX_B = {
+        "status": "checked", "checked_at": "2026-11-17", "reason": "시행 중인 기준의 현재 내용 확인이 필요함",
+        "queries": ["예시 검색어"],
+        "items": [
+            {"claim": "예시 사실: 해당 기준은 2026년 중 개정되어 현재 개정본이 시행 중이다.",
+             "source": "https://example.go.kr/notice/1", "source_label": "예시 부처 공지", "confirmed": True,
+             "note": "개정 전 기준과 혼동 주의"},
+            {"claim": "예시 사실: 세부 시행일은 확인하지 못했다.", "confirmed": False, "note": "미확인(기준: 2026-11-17)"},
+        ],
+    }
+
+    def _block(self, facts):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "facts.json"
+            path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+            return subprocess.run([sys.executable, str(SCRIPT), "facts-block", str(path)], capture_output=True)
+
+    def test_appendix_b_example_passes_everywhere_with_one_link(self):
+        self.assertEqual(facts_errors(self.APPENDIX_B), [])
+        run = self._block(self.APPENDIX_B)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn(b"F2.", run.stdout)
+        html = facts_html(self.APPENDIX_B)
+        body = html.split('<details class="facts">', 1)[1].split("</details>", 1)[0]
+        self.assertEqual(body.count("<a "), 1)
+
+    def test_minimal_skipped_and_unavailable_shapes_pass(self):
+        for status, stdout_empty in (("skipped", True), ("unavailable", False)):
+            facts = {"status": status, "checked_at": "2026-11-17", "reason": "사유"}
+            run = self._block(facts)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertEqual(run.stdout == b"", stdout_empty)
+            d = sample()
+            d["facts"] = facts
+            self.assertEqual(validate(d), [])
+
+    def test_facts_block_with_undecodable_bytes_exits_2_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "facts.json"
+            path.write_bytes(b'{"status": "' + bytes([0xFF, 0xFE]) + b'"}')
+            run = subprocess.run([sys.executable, str(SCRIPT), "facts-block", str(path)], capture_output=True)
+            self.assertEqual(run.returncode, 2)
+            self.assertNotIn(b"Traceback", run.stderr)
+
+
+class FactsIntroWordingTests(unittest.TestCase):
+    def test_intro_does_not_assert_what_the_renderer_cannot_know(self):
+        body = facts_html(facts_sample()).split('<p class="facts-intro">', 1)[1].split("</p>", 1)[0]
+        self.assertNotIn("보았습니다", body)
+        self.assertIn("같은 자료를 주도록 했고", body)
+        self.assertIn("F1", body)
+
+
 if __name__ == "__main__":
     unittest.main()
