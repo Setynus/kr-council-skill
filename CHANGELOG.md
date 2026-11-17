@@ -4,13 +4,16 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-17
+
 ### 추가
 - 최신 사실이 답을 좌우하는 안건에서 사회자가 위원장 명의로 한 번 조사해, 같은 사실 자료를 위원 5명·검토 5명·위원장에게 똑같이 주는 1.5단계(`SKILL.md`)를 넣었습니다. 조사 결과는 `raw` 폴더의 `facts.json`에 저장하고, 새 하위 명령 `facts-block`이 프롬프트에 붙일 사실 블록을 항상 같은 글자로 출력하며, `assemble`이 같은 파일을 보고서 데이터의 `facts`로 싣습니다.
 - 보고서의 안건 카드 아래에 접이식 "사실 확인"(항목 번호 F1…, 출처 링크·표기, 미확인 배지)이 생깁니다. 사실 확인을 하지 않았거나 건너뛴 보고서는 본문이 이전과 바이트 단위로 같고, 인쇄에서는 이 접이식이 빠집니다.
 - `validate`가 `facts`를 검사합니다(`status`, 실제 있는 `checked_at` 날짜, 항목 수 상한, http(s) 링크만 허용, 미확인 항목의 URL 금지, `<BEGIN_UNTRUSTED>`류 표시 거부).
 
 ### 알려진 한계
-- 사실 확인이 실제로 올바른 검색·재서술로 이어지는지는 문안과 단위 테스트로만 확인했고, 평가 케이스와 실제 실행은 아직 없습니다.
+- 사실 확인은 단위 테스트와, 가상 안건 1건의 종단 실행(병렬, 검색 5회·하위 호출 11개)으로 확인했습니다. 종단 실행은 문안을 쓴 같은 세션이 사회자를 맡았으므로, 처음 보는 사회자가 문안만 읽고 그대로 움직이는지는 확인하지 못했습니다. 평가 케이스(`evals/`)는 아직 없습니다.
+- 사실 블록을 위원·검토·위원장 프롬프트에 붙이는 일은 모델이 복사하므로, 바이트 동일성은 `facts-block` 출력까지만 코드로 보장됩니다.
 - JS를 끄고 인쇄하면 질문과 위원 카드가 그대로 펼쳐지는 기존 동작은 이번에도 고치지 않았습니다. 사실 확인 접이식만 인쇄에서 빠집니다.
 
 ## [0.5.2] - 2026-11-17
@@ -167,7 +170,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.6.0
 [0.5.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.2
 [0.5.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.1
 [0.5.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.0
