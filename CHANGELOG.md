@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-17
+
 ### 추가
 - 사실 확인(1.5단계)이 비교 안건을 지원합니다. `facts.subjects`(대상 2~4개), 항목별 `subject`, 산정 가정·관할을 적는 `facts.assumptions`를 검증하고, 보고서의 "사실 확인" 접이식에 대상별 묶음(공통은 마지막, 항목 번호 F1…은 입력 순서 그대로)과 "산정 가정"으로 보여 줍니다. `facts-block`도 같은 정보를 출력해 위원이 같은 가정을 봅니다.
 - 항목·검색어 상한이 대상 수에 비례합니다(대상 2개 16·14, 3개 20·17, 4개 20·20). `subjects` 없는 단일 안건은 이전처럼 항목 10·검색어 8입니다. `SKILL.md`의 1단계 비용 알림과 1.5단계에 대칭 조사, 총경비 같은 산정값 금지, 해외 안건의 "관할: ○○" 표기를 넣었습니다.
@@ -179,7 +181,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.7.0
 [0.6.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.6.0
 [0.5.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.2
 [0.5.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.1
