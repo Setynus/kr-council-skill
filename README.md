@@ -1,6 +1,6 @@
 # kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
 
-[![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.5.2-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
@@ -133,7 +133,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 버전 이력
 
-최신 버전 0.5.1(2026-11-16): 하위 에이전트가 영어로 답하면 `check`가 불량으로 걸러 한 번 다시 받습니다. 재호출 답도 영어이면 번역하지 않고 사용자에게 묻습니다.
+최신 버전 0.5.2(2026-11-17): 자해·자살 암시, 응급 증상, 긴박한 신변 위험이 보이면 위원회를 소집하지 않고 상담·응급 기관 안내를 먼저 합니다.
 
 이전 버전과 전체 변경 내용은 [CHANGELOG.md](CHANGELOG.md), 배포본은 [Releases](https://github.com/Setynus/kr-council-skill/releases)를 보세요.
 

@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-17
+
 ### 추가
 - `SKILL.md` 1단계에 위기 신호 규칙을 넣었습니다. 자해·자살 암시, 응급 증상, 긴박한 신변 위험이 보이면 "위원회 열어줘"라고 해도 소집하지 않고, 검색·실행 방식 질문·비용 안내·보고서 없이 안전을 묻고 상담·응급 기관을 안내합니다. 번호는 정부 안내로 확인한 자살예방 상담전화 109만 쓰고, 응급실·소방·경찰은 번호 없이 기관 종류로만 안내합니다.
 
@@ -156,7 +158,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.2
 [0.5.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.1
 [0.5.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.4.0
