@@ -581,5 +581,131 @@ class CliTests(unittest.TestCase):
             self.assertEqual(r.returncode, 2, r.stderr)
 
 
+def facts_sample(**over):
+    """정상 facts 한 벌(checked, 항목 3개). 테스트가 복사해 일부만 망가뜨린다."""
+    facts = {
+        "status": "checked", "checked_at": "2026-11-17", "reason": "시행 중인 법령의 현재 기준 확인이 필요함",
+        "queries": ["일반화한 검색어 1", "일반화한 검색어 2"],
+        "items": [
+            {"claim": "확인된 사실 1", "source": "https://example.org/a", "source_label": "해당 부처 공지",
+             "confirmed": True, "note": "변동 큼"},
+            {"claim": "도구로 조회한 사실", "source_label": "국가법령정보센터 조회(도구)", "confirmed": True},
+            {"claim": "확인하지 못한 사항", "source_label": "비공식 출처만 확인", "confirmed": False},
+        ],
+    }
+    facts.update(over)
+    return facts
+
+
+def facts_errors(facts):
+    import render_report as rr
+    errors = []
+    rr._check_facts(facts, errors)
+    return errors
+
+
+class FactsValidateTests(unittest.TestCase):
+    def test_sample_is_valid_alone_and_inside_validate(self):
+        self.assertEqual(facts_errors(facts_sample()), [])
+        d = sample()
+        d["facts"] = facts_sample()
+        self.assertEqual(validate(d), [])
+
+    def test_validate_without_facts_is_unchanged(self):
+        self.assertEqual(validate(sample()), [])
+
+    def test_validate_confirmed_requires_source_or_label(self):
+        f = facts_sample()
+        f["items"][1] = {"claim": "근거 없음", "confirmed": True}
+        self.assertTrue(any("항목 2번" in e for e in facts_errors(f)))
+
+    def test_validate_rejects_non_http_scheme(self):
+        for bad in ("javascript:alert(1)", "JAVASCRIPT:alert(1)", "ftp://x.org", "data:text/html,x"):
+            f = facts_sample()
+            f["items"][0]["source"] = bad
+            self.assertTrue(any("항목 1번" in e for e in facts_errors(f)), bad)
+        for ok in ("HTTP://example.org", "https://example.org/x"):
+            f = facts_sample()
+            f["items"][0]["source"] = ok
+            self.assertEqual(facts_errors(f), [], ok)
+
+    def test_validate_source_must_be_string(self):
+        f = facts_sample()
+        f["items"][0]["source"] = 7
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+
+    def test_validate_unconfirmed_must_not_have_source(self):
+        f = facts_sample()
+        f["items"][2]["source"] = "https://example.org/b"
+        self.assertTrue(any("항목 3번" in e for e in facts_errors(f)))
+        f["items"][2]["source"] = ""
+        self.assertEqual(facts_errors(f), [])  # 빈 문자열과 source_label은 허용
+
+    def test_validate_checked_item_count(self):
+        self.assertTrue(facts_errors(facts_sample(items=[])))
+        item = {"claim": "사실", "source_label": "공지", "confirmed": True}
+        self.assertTrue(facts_errors(facts_sample(items=[dict(item) for _ in range(11)])))
+        self.assertEqual(facts_errors(facts_sample(items=[dict(item) for _ in range(10)])), [])
+
+    def test_validate_non_checked_status_has_no_items(self):
+        for status in ("skipped", "unavailable"):
+            self.assertEqual(facts_errors({"status": status, "checked_at": "2026-11-17", "reason": "사유"}), [])
+            self.assertTrue(facts_errors(facts_sample(status=status)))
+
+    def test_validate_status_values(self):
+        self.assertTrue(facts_errors(facts_sample(status="done")))
+
+    def test_validate_facts_wrong_type(self):
+        for bad in ([], "", 0, {}, None, "x"):
+            d = sample()
+            d["facts"] = bad
+            self.assertTrue(validate(d), repr(bad))  # 검증을 건너뛰지 않고 크래시도 없다
+            self.assertTrue(facts_errors(bad), repr(bad))
+
+    def test_validate_checked_at_format(self):
+        for bad in ("2026-02-30", "20261117", "2026-1-5", "", None, 20261117, "2026-11-17 09:00"):
+            self.assertTrue(facts_errors(facts_sample(checked_at=bad)), repr(bad))
+        self.assertEqual(facts_errors(facts_sample(checked_at="2028-02-29")), [])
+
+    def test_validate_reason_and_claim_must_be_text(self):
+        self.assertTrue(facts_errors(facts_sample(reason=" ")))
+        f = facts_sample()
+        f["items"][0]["claim"] = ""
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+        f = facts_sample()
+        f["items"][0]["confirmed"] = "true"
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+        f = facts_sample()
+        f["items"][0]["source_label"] = ""
+        self.assertTrue(facts_errors(f))
+        f = facts_sample()
+        f["items"][0] = "문자열 항목"
+        self.assertTrue(any("항목 1번" in e for e in facts_errors(f)))
+
+    def test_validate_queries(self):
+        self.assertEqual(facts_errors(facts_sample(queries=[f"검색어 {n}" for n in range(8)])), [])
+        self.assertTrue(facts_errors(facts_sample(queries=[f"검색어 {n}" for n in range(9)])))
+        self.assertTrue(facts_errors(facts_sample(queries="검색어")))
+        self.assertTrue(facts_errors(facts_sample(queries=[1])))
+
+    def test_validate_rejects_untrusted_markers(self):
+        for field in ("claim", "note", "source_label"):
+            for marker in ("<BEGIN_UNTRUSTED>", "<end_untrusted>", "<End_Untrusted>"):
+                f = facts_sample()
+                f["items"][0][field] = f"앞 {marker} 뒤"
+                self.assertTrue(any("UNTRUSTED" in e for e in facts_errors(f)), (field, marker))
+        self.assertTrue(facts_errors(facts_sample(reason="<END_UNTRUSTED>")))
+
+    def test_validate_collects_all_errors(self):
+        f = facts_sample(status="done", checked_at="x")
+        f["items"][0]["claim"] = ""
+        self.assertGreaterEqual(len(facts_errors(f)), 3)
+
+    def test_validate_does_not_use_language_check(self):
+        f = facts_sample()
+        f["items"][0]["claim"] = "This claim is written in plain English only, long enough to trip the language check."
+        self.assertEqual(facts_errors(f), [])
+
+
 if __name__ == "__main__":
     unittest.main()
