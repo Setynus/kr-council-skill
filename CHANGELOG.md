@@ -4,8 +4,17 @@
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-18
+
+### 수정
+- 1.5단계: 사용자 자료와 공식 자료가 충돌하면 사실 확인을 건너뛰지 않고 항목으로 만들도록 문안을 고쳤습니다(스킬 동작 변경, `SKILL.md`).
+
 ### 변경
-- `evals/`의 검색이 필요하거나 "검색하지 않음"을 검증하는 케이스 4건(`convenes-on-travel-comparison`, `does-not-skip-when-law-decides`, `respects-no-search-instruction`, `uses-user-provided-document`)의 `allowed_tools`에 `WebSearch`·`WebFetch`를 추가했습니다. 평가 자산만 바뀌어 배포 zip은 v0.8.0과 같습니다. 케이스 실행은 이 저장소에 하네스가 없어 아직 하지 못했습니다.
+- `evals/`의 검색이 필요하거나 "검색하지 않음"을 검증하는 케이스 4건(`convenes-on-travel-comparison`, `does-not-skip-when-law-decides`, `respects-no-search-instruction`, `uses-user-provided-document`)의 `allowed_tools`에 `WebSearch`·`WebFetch`를 추가했습니다. 평가 자산 변경이며, 이 변경만으로는 배포 zip이 바뀌지 않습니다.
+
+### 알려진 한계
+- 확인한 것: 단위 테스트 278개, CI 6개 조합. v0.8.0 신규 `evals/` 7건을 실행했고(`docs/evals-run-2026-11-17.md`), 비소집 2건과 convenes·law 케이스는 통과했습니다. `flags`와 `uses-user-document`는 문안 수정 후 각각 5/5로 통과했습니다(하루, 소표본).
+- 확인하지 못한 것: `respects-no-search-instruction`은 실행마다 결과가 달라 아직 고치지 못했습니다. 문안 수정 후 나머지 케이스는 다시 실행하지 않았습니다.
 
 ## [0.8.0] - 2026-11-17
 
@@ -200,7 +209,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.8.1
 [0.8.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.8.0
 [0.7.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.7.0
 [0.6.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.6.0
