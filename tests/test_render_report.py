@@ -1062,9 +1062,14 @@ class FactsCompareRenderTests(unittest.TestCase):
         self.assertIn("공통</h4>", body)
         self.assertIn("주체 없음", body.split("공통</h4>", 1)[1])
 
-    def test_render_skips_subject_without_items(self):
+    def test_render_marks_subject_without_items(self):
+        # 항목이 없는 대상은 숨기지 않고 "확인한 항목 없음"으로 비대칭을 드러낸다(D16). 공통은 항목이 있을 때만 나온다.
         facts = facts_sample(subjects=["대상 A", "대상 B"], items=[compare_item("대상 A", "가")])
-        self.assertNotIn("대상 B</h4>", self._body(facts))
+        body = self._body(facts)
+        self.assertIn("대상 B</h4>", body)
+        self.assertIn("확인한 항목 없음", body.split("대상 B</h4>", 1)[1])
+        self.assertNotIn("확인한 항목 없음", body.split("대상 B</h4>", 1)[0])
+        self.assertNotIn("공통</h4>", body)
 
     def test_render_without_subjects_is_single_list_as_before(self):
         body = self._body(facts_sample())

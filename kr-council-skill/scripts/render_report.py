@@ -672,8 +672,10 @@ def _facts_html(data):
         groups = {name: [] for name in subjects + [FACTS_COMMON]}
         for n, item in numbered:
             groups[_subject_of(item, subjects)].append(_fact_item(n, item))
-        body = "".join(f'<h4 class="facts-subject">{_e(name)}</h4><ol class="facts-list">{"".join(rows)}</ol>'
-                       for name, rows in groups.items() if rows)
+        # 항목이 없는 대상은 숨기지 않고 표시해 비대칭을 드러낸다(D16). 공통은 항목이 있을 때만 낸다.
+        body = "".join(f'<h4 class="facts-subject">{_e(name)}</h4>'
+                       + (f'<ol class="facts-list">{"".join(rows)}</ol>' if rows else '<p class="facts-empty">확인한 항목 없음</p>')
+                       for name, rows in groups.items() if rows or name != FACTS_COMMON)
     else:
         body = f'<ol class="facts-list">{"".join(_fact_item(n, item) for n, item in numbered)}</ol>'
     return ('<details class="facts">'
