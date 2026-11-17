@@ -28,6 +28,9 @@ class PackageSkillTests(unittest.TestCase):
                      "references/advisors.md", "references/ko-context.md"):
             self.assertIn(f"kr-council-skill/{need}", self.names)
 
+    def test_domain_context_included(self):
+        self.assertIn("kr-council-skill/references/domain-context.md", self.names)
+
     def test_dev_files_excluded(self):
         for n in self.names:
             self.assertNotIn("/evals/", n)

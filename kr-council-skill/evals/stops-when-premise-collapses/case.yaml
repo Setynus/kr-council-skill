@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: stops-when-premise-collapses
+expected_outcome: |
+  사실 확인 결과 신청 마감이 이미 지났으면 소집하지 않고 이유와 대안을 안내하며 되묻는다.

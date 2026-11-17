@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: convenes-on-travel-comparison
+expected_outcome: |
+  여행지 두 곳을 비교하는 안건에서 최신 사실을 대상별로 똑같이 조사해 소집하고, 산정 가정을 표기하며 총경비를 사실로 쓰지 않는다.

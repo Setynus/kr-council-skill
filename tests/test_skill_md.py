@@ -421,6 +421,54 @@ class SkillMdTests(unittest.TestCase):
         nums = [int(n) for n in re.findall(r"^(\d+)\. ", self.fact_step(), flags=re.M)]
         self.assertEqual(nums, list(range(1, len(nums) + 1)))
 
+    # --- 영역·고위험·시나리오(PR-C) ---
+
+    def test_domain_context_linked_and_exists(self):
+        links = re.findall(r"\]\((references/[^)#\s]+)\)", self.fact_step())
+        self.assertIn("references/domain-context.md", links)
+        target = SKILL_DIR / "references" / "domain-context.md"
+        self.assertTrue(target.exists())
+        text = target.read_text(encoding="utf-8")
+        self.assertNotRegex(text, r"\]\([^)]*\.md")  # 한 단계 깊이 규칙
+        for area in ("여행", "소비·제품 구매", "학업·진학", "주거·이사·지역", "건강·의료", "가족·육아",
+                     "공공·행정", "금융·투자", "사업·창업", "해외 제도"):
+            self.assertIn(f"| {area}", text)
+        self.assertIn("같은 범주", text)
+
+    def test_safety_rules_present(self):
+        step4 = self.body.split("## 4단계", 1)[1].split("## 5단계", 1)[0]
+        for needle in ("의료·법률·세무·투자·안전", "조건부", "전문가 확인", "blindspots", "단정하지 않는다"):
+            self.assertIn(needle, step4)
+        self.assertIn("domain-context.md", self.fact_step())
+
+    def test_user_given_values_are_marked_not_searched(self):
+        step1 = self.body.split("## 1단계", 1)[1].split("## 1.5단계", 1)[0]
+        self.assertIn("사용자 제시", step1)
+        step = self.fact_step()
+        for needle in ("수치·상태", "검증하지 않는다", "공개적으로 확인 가능", "둘 다 표기", "내부 규정", "비공개 자료"):
+            self.assertIn(needle, step)
+
+    def test_fact_check_scenario_rules(self):
+        step = self.fact_step()
+        for needle in ("사용자 제공 자료", "전용 조회 도구", "시행 예정", "별개 항목", "공식 출처끼리 충돌",
+                       "복합 안건", "재소집", "7일", "재확인"):
+            self.assertIn(needle, step)
+
+    def test_ko_context_amount_row_allows_foreign_currency_with_rate_date(self):
+        text = (SKILL_DIR / "references" / "ko-context.md").read_text(encoding="utf-8")
+        row = next(l for l in text.splitlines() if l.startswith("| 금액"))
+        self.assertNotIn("달러 가정을 쓰지 않는다", row)
+        for needle in ("원화", "해외 통화", "환산 환율", "기준일"):
+            self.assertIn(needle, row)
+
+    def test_trigger_eval_extended_without_touching_original_entries(self):
+        import json
+        data = json.loads((SKILL_DIR.parent / "tests" / "trigger-eval.json").read_text(encoding="utf-8"))
+        self.assertEqual(sum(1 for d in data if d["should_trigger"]), 19)
+        self.assertEqual(sum(1 for d in data if not d["should_trigger"]), 14)  # 위기(q17)는 PR-S에서 이미 들어 있다
+        for d in data:
+            self.assertEqual(set(d), {"query", "should_trigger"})
+
 
 if __name__ == "__main__":
     unittest.main()
