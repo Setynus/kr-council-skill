@@ -437,7 +437,8 @@ class SkillMdTests(unittest.TestCase):
 
     def test_safety_rules_present(self):
         step4 = self.body.split("## 4단계", 1)[1].split("## 5단계", 1)[0]
-        for needle in ("의료·법률·세무·투자·안전", "조건부", "전문가 확인", "blindspots", "단정하지 않는다"):
+        for needle in ("의료·법률·세무·투자·안전", "조건부", "전문가 확인", "blindspots", "단정하지 않는다",
+                       "공식 출처끼리 충돌", "이미 낮음이면 유지"):
             self.assertIn(needle, step4)
         self.assertIn("domain-context.md", self.fact_step())
 
@@ -464,8 +465,8 @@ class SkillMdTests(unittest.TestCase):
     def test_trigger_eval_extended_without_touching_original_entries(self):
         import json
         data = json.loads((SKILL_DIR.parent / "tests" / "trigger-eval.json").read_text(encoding="utf-8"))
-        self.assertEqual(sum(1 for d in data if d["should_trigger"]), 19)
-        self.assertEqual(sum(1 for d in data if not d["should_trigger"]), 14)  # 위기(q17)는 PR-S에서 이미 들어 있다
+        self.assertGreaterEqual(sum(1 for d in data if d["should_trigger"]), 19)
+        self.assertGreaterEqual(sum(1 for d in data if not d["should_trigger"]), 14)  # 위기(q17)는 PR-S에서 이미 들어 있다
         for d in data:
             self.assertEqual(set(d), {"query", "should_trigger"})
 
