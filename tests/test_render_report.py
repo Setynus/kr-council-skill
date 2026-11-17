@@ -936,5 +936,13 @@ class FactsHandoffExamplesTests(unittest.TestCase):
             self.assertNotIn(b"Traceback", run.stderr)
 
 
+class FactsIntroWordingTests(unittest.TestCase):
+    def test_intro_does_not_assert_what_the_renderer_cannot_know(self):
+        body = facts_html(facts_sample()).split('<p class="facts-intro">', 1)[1].split("</p>", 1)[0]
+        self.assertNotIn("보았습니다", body)
+        self.assertIn("같은 자료를 주도록 했고", body)
+        self.assertIn("F1", body)
+
+
 if __name__ == "__main__":
     unittest.main()

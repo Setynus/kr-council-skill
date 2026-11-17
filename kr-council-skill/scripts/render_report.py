@@ -626,8 +626,8 @@ def _facts_html(data):
         return ""
     return ('<details class="facts">'
             f'<summary>사실 확인 · 확인일 {_e(facts.get("checked_at", ""))}</summary>'
-            '<p class="facts-intro">사회자가 위원장 명의로 한 번 조사한 자료이며, 위원 5명·검토 5명·위원장이 같은 자료를 보았습니다. '
-            '위원은 항목 번호(F1…)로 인용합니다.</p>'
+            '<p class="facts-intro">사회자가 위원장 명의로 한 번 조사한 자료입니다. 위원·검토·위원장에게 같은 자료를 주도록 했고, '
+            '항목 번호(F1…)로 인용합니다.</p>'
             f'<ol class="facts-list">{"".join(rows)}</ol></details>')
 
 
