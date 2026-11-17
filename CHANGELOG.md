@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-18
+
+### 수정
+- 1.5단계: 사실 확인을 건너뛸 때의 `facts.json` 기록과 "사실 확인은 건너뜁니다: 사유" 한 줄 알림을 "건너뛸 때의 필수 동작"으로 한곳에 모았고, 검색을 하지 않아도 1단계 비용 알림은 생략하지 않는다고 적었습니다. 사용자가 검색하지 말라고 해서 건너뛸 때도 둘 다 하라고 명시했습니다(스킬 동작 변경, `SKILL.md`).
+
+### 추가
+- `tools/package_skill.py`가 `kr-council-skill.zip`과 내용이 같은 `kr-council-skill.skill`도 만들고, 릴리스에 둘 다 첨부합니다. README 설치 섹션에 다운로드 안내를 넣었습니다.
+
+### 알려진 한계
+- 확인한 것: 단위 테스트(`.skill` 사본 테스트 1건 추가), CI.
+- 확인하지 못한 것: `respects-no-search-instruction` 케이스는 비용 때문에 다시 실행하지 않아 이 수정으로 고쳐졌는지 모릅니다. `.skill` 확장자를 claude.ai 업로드 화면이 실제로 받는지도 확인하지 못했습니다.
+
 ## [0.8.1] - 2026-11-18
 
 ### 수정
@@ -209,7 +221,8 @@
 - 병렬·독립성 검사 도구(`tools/check_parallel.py`), 블라인드 비교 도구와 결과(`comparison/`), claude.ai 업로드용 zip 패키징(`tools/package_skill.py`).
 - MIT 라이선스, `NOTICE.md`(출처와 스머프 상표 고지).
 
-[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/Setynus/kr-council-skill/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.8.2
 [0.8.1]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.8.1
 [0.8.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.8.0
 [0.7.0]: https://github.com/Setynus/kr-council-skill/releases/tag/v0.7.0

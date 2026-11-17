@@ -7,7 +7,7 @@ Python 3.10 이상이면 됩니다. 외부 패키지는 필요 없습니다.
 
 ```
 python -m unittest discover tests     # 전체 테스트
-python tools/package_skill.py         # claude.ai 업로드용 zip (dist/)
+python tools/package_skill.py         # claude.ai 업로드용 zip과 .skill (dist/)
 ```
 
 ## 작업 방식
