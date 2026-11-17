@@ -2,7 +2,7 @@
 tags: [kr-council-skill]
 max_turns: 40
 timeout_seconds: 900
-allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash, Agent]
+allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash, Agent, WebSearch, WebFetch]
 ---
 
 위원회 열어줘. 아래는 내가 받은 지원사업 공고문이야. 이 내용만 기준으로 신청할지 정해줘.

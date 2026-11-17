@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### 변경
+- `evals/`의 검색이 필요하거나 "검색하지 않음"을 검증하는 케이스 4건(`convenes-on-travel-comparison`, `does-not-skip-when-law-decides`, `respects-no-search-instruction`, `uses-user-provided-document`)의 `allowed_tools`에 `WebSearch`·`WebFetch`를 추가했습니다. 평가 자산만 바뀌어 배포 zip은 v0.8.0과 같습니다. 케이스 실행은 이 저장소에 하네스가 없어 아직 하지 못했습니다.
+
 ## [0.8.0] - 2026-11-17
 
 ### 추가
