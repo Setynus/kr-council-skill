@@ -1153,6 +1153,22 @@ class FactsCompareBlockTests(unittest.TestCase):
     def test_facts_block_rejects_invalid_subjects(self):
         self.assertEqual(self._block(facts_sample(subjects=["하나만"])).returncode, 2)
 
+    def test_facts_block_shows_subject_without_items(self):
+        # 보고서가 "확인한 항목 없음"으로 보이는 대상은 위원이 보는 블록에도 같은 말로 보인다(D41).
+        facts = facts_sample(subjects=["대상 A", "대상 B"], items=[compare_item("대상 A", "에이 사실")])
+        run = self._block(facts)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        lines = run.stdout.decode("utf-8").splitlines()
+        self.assertIn("[대상 B] 확인한 항목 없음", lines)
+        self.assertNotIn("[대상 A] 확인한 항목 없음", lines)
+        self.assertFalse(any(l.startswith("F") and "확인한 항목 없음" in l for l in lines))  # 항목 번호·[공통]과 섞이지 않는다
+        self.assertEqual(lines[-1], "<END_UNTRUSTED>")
+        self.assertEqual(run.stdout, self._block(facts).stdout)
+
+    def test_facts_block_empty_subject_line_not_added_when_all_have_items(self):
+        facts = facts_sample(subjects=["대상 A", "대상 B"], items=[compare_item("대상 A", "가"), compare_item("대상 B", "나")])
+        self.assertNotIn("확인한 항목 없음", self._block(facts).stdout.decode("utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

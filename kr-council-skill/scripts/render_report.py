@@ -737,6 +737,9 @@ def facts_block(facts):
             if item.get(key):
                 parts.append(f"{label}: {item[key]}")
         lines.append(" ".join(parts))
+    if subjects:  # 보고서의 "확인한 항목 없음"과 같은 말. F 번호가 없어 [공통] 항목과 섞이지 않는다
+        have = {item.get("subject") for item in facts["items"]}
+        lines.extend(f"[{s}] 확인한 항목 없음" for s in subjects if s not in have)
     lines.append("<END_UNTRUSTED>")
     return "\n".join(lines) + "\n"
 

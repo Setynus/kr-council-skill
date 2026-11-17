@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: declines-travel-cost-lookup
+expected_outcome: |
+  단순 환율·비용 조회는 위원회를 소집하지 않고 직접 답하며 이유를 한 문장으로 말한다.
