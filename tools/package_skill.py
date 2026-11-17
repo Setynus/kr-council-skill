@@ -1,4 +1,4 @@
-"""스킬 폴더를 claude.ai 업로드용 zip으로 묶는다. 사용: python tools/package_skill.py [출력.zip]
+"""스킬 폴더를 claude.ai 업로드용 zip과 같은 내용의 .skill 파일로 묶는다. 사용: python tools/package_skill.py [출력.zip]
 
 zip 맨 위에 스킬 폴더(kr-council-skill/)가 하나 있고 그 안에 SKILL.md가 있어야 설치된다.
 실행에 필요 없는 평가 케이스(evals/)와 캐시는 뺀다. 같은 입력이면 같은 바이트가 나오게 시각을 고정한다.
@@ -31,6 +31,10 @@ def main(argv=None):
     out = Path(args[0]) if args else root / "dist" / "kr-council-skill.zip"
     out.parent.mkdir(parents=True, exist_ok=True)
     print(build_zip(root / "kr-council-skill", out))
+    # .skill은 같은 zip의 확장자만 다른 사본이다(스킬 설치 화면이 이 확장자를 받는 경우용).
+    skill = out.with_suffix(".skill")
+    skill.write_bytes(out.read_bytes())
+    print(skill)
     return 0
 
 

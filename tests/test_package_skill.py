@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
-from package_skill import build_zip  # noqa: E402
+from package_skill import build_zip, main  # noqa: E402
 
 
 class PackageSkillTests(unittest.TestCase):
@@ -40,6 +40,11 @@ class PackageSkillTests(unittest.TestCase):
     def test_zip_is_reproducible(self):
         again = build_zip(ROOT / "kr-council-skill", Path(self.tmp.name) / "again.zip")
         self.assertEqual(Path(self.zip).read_bytes(), Path(again).read_bytes())
+
+    def test_main_writes_skill_copy_identical_to_zip(self):
+        out = Path(self.tmp.name) / "m.zip"
+        main([str(out)])
+        self.assertEqual(out.read_bytes(), out.with_suffix(".skill").read_bytes())
 
     def test_skill_md_has_license_field_and_repo_has_mit_license(self):
         head = (ROOT / "kr-council-skill" / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[1]

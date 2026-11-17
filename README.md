@@ -1,6 +1,6 @@
 # kr-council-skill — 한국어 위원회 의사결정 스킬 for Claude
 
-[![Version](https://img.shields.io/badge/version-0.8.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.8.2-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/lang-한국어-red.svg)](#kr-council-skill--한국어-위원회-의사결정-스킬-for-claude)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill-orange.svg)](https://claude.ai)
@@ -57,7 +57,9 @@ Karpathy의 llm-council 방식(자문 → 익명 상호 검토 → 의장 종합
 2. 설정의 스킬(Skills) 메뉴에서 zip 파일을 업로드하고 스킬을 켭니다. 메뉴 이름과 지원 요금제는 바뀔 수 있으니 Anthropic의 스킬 사용 안내를 확인하세요.
 3. 코드 실행이 꺼져 있으면 HTML 보고서를 만들 수 없어, 같은 구성의 마크다운 보고서를 대화에 씁니다.
 
-zip을 직접 만들려면 `python tools/package_skill.py`를 실행하면 `dist/kr-council-skill.zip`이 생깁니다.
+**다운로드할 파일:** [Releases](../../releases)의 Assets에 같은 내용의 파일이 두 가지로 올라와 있습니다. `kr-council-skill.zip`을 받아 위처럼 올리세요. 업로드 화면이 `.skill` 파일을 받는 경우에는 `kr-council-skill.skill`을 받으면 됩니다. 두 파일은 확장자만 다릅니다.
+
+직접 만들려면 `python tools/package_skill.py`를 실행하면 `dist/`에 `kr-council-skill.zip`과 `kr-council-skill.skill`이 생깁니다.
 
 ## 사용법
 
@@ -133,7 +135,7 @@ Claude에게 이렇게 말하고 결정 상황을 알려 주세요.
 
 ## 버전 이력
 
-최신 버전 0.8.1(2026-11-18): 사용자 자료와 공식 자료가 충돌할 때 사실 확인(1.5단계)을 건너뛰지 않고 항목으로 만들도록 문안을 고쳤습니다.
+최신 버전 0.8.2(2026-11-18): 사실 확인을 건너뛸 때 `facts.json` 기록과 한 줄 알림을 둘 다 하도록 필수 동작을 한곳에 모았고, 릴리스에 `.skill` 파일을 함께 올립니다.
 
 이전 버전과 전체 변경 내용은 [CHANGELOG.md](CHANGELOG.md), 배포본은 [Releases](https://github.com/Setynus/kr-council-skill/releases)를 보세요.
 
